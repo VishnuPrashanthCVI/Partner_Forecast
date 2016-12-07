@@ -1,17 +1,16 @@
 
 import pandas as pd
 import numpy as np
-import data as d
 from sklearn.feature_extraction import DictVectorizer
 from pyfm import pylibfm as plf
 import random as ra 
 import string
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import mean_squared_error
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
@@ -24,7 +23,6 @@ from sklearn import tree
 
 
 def load_data(data):
-	import pandas as pd
 	na_list = ["Don't Know", "No Experience", "Not Applicable"]
 	df = pd.read_csv(data, na_values = na_list)
 	return df
@@ -47,22 +45,24 @@ def set_idx(df):
 		df = df.set_value(i,'IDX',str(i))
 	return df
 	
-def fit_train_dct(df):
+def melt_train_dict(dff):
 	#create dcitionaries for factor matrix operation
-	Xtrain = []
+	X = []
 	y=[]
-	dfm = pd.melt(df,id_vars=['IDX'])
+	dff.IDX = range(dff.shape[0])
+	dfm = pd.melt(dff,id_vars=['IDX'])
 	not_null_vec = pd.notnull(dfm.value)
 	df_data = dfm[not_null_vec]
 	for i in range(len(df_data)):
-		Xtrain.append({'response_id':str(df_data.iloc[i,0]),'ques_id':str(df_data.iloc[i,1])})
+		X.append({'response_id':str(df_data.iloc[i,0]),'ques_id':str(df_data.iloc[i,1])})
 		y.append(float(df_data.iloc[i,2]))
-	return Xtrain, y, df_data
+	return X, y, df_data
 	
-def fit_pred_dct(df):
+def melt_pred_dict(dff):
 	#create factor program prediction 
-	Xpred=[] 
-	dfm = pd.melt(df,id_vars=['IDX'])
+	Xpred=[]
+	dff.IDX = range(dff.shape[0]) 
+	dfm = pd.melt(dff,id_vars=['IDX'])
 	null_vec = pd.isnull(dfm.value)
 	df_predict = dfm[null_vec]
 	for i in range(len(df_predict)):
@@ -77,12 +77,17 @@ def vectorize(Xtrain,Xtest,Xpred):
 	X_pred = v.transform(Xpred)
 	return X_train,X_test,X_pred
 	
-def merge_data(df_predict, y_pred, df_data):
+def merge_data(df_predict, y_pred, df_data, df):
 	df_predict.drop('value',axis=1,inplace=True)
 	df_predict['value']=y_pred
 	dfp = pd.concat([df_data,df_predict])
-	dfdata = dfp.pivot(index='IDX',columns='variable',values='value')
-	dfdata.reset_index(inplace=True)
+	dfp.sort_index(inplace=True)
+	dfdata = dfp.pivot_table(index = 'IDX', columns=['variable'],values='value')
+	dfdata.fillna(method='ffill', inplace = True)
+	Qtr = df.Qtr
+	IDX = df.IDX
+	dfdata['Qtr'] = Qtr
+	dfdata['IDX'] = IDX
 	return dfdata
 
 def data_prep(dfdata, df11, df12, df13, df14, df2, length=963):
@@ -129,17 +134,17 @@ def dtdata_prep(dft, df11, df12, df13, df14, df2, length=963):
 	dftq13 = dft[dft.Qtr==3][:length]
 	dftq14 = dft[dft.Qtr==4][:length]
 	dftq2 = dft[dft.Qtr==5][:length]
-	dftq11.IDX=range(1,length+1)
-	dftq12.IDX=range(1,length+1)
-	dftq13.IDX=range(1,length+1)
-	dftq14.IDX=range(1,length+1)
-	dftq2.IDX=range(1,length+1)
-	cols = ['IDX']
-	df11.drop(cols,axis=1,inplace=True)
-	df12.drop(cols,axis=1,inplace=True) 
-	df13.drop(cols,axis=1,inplace=True)
-	df14.drop(cols,axis=1,inplace=True)
-	df2.drop(cols,axis=1,inplace=True)
+	#dftq11.IDX=range(1,length+1)
+	#dftq12.IDX=range(1,length+1)
+	#dftq13.IDX=range(1,length+1)
+	#dftq14.IDX=range(1,length+1)
+	#dftq2.IDX=range(1,length+1)
+	#cols = ['IDX']
+	#df11.drop(cols,axis=1,inplace=True)
+	#df12.drop(cols,axis=1,inplace=True) 
+	#df13.drop(cols,axis=1,inplace=True)
+	#df14.drop(cols,axis=1,inplace=True)
+	#df2.drop(cols,axis=1,inplace=True)
 	df11.reset_index(drop=True,inplace=True)
 	dftq11.reset_index(drop=True,inplace=True)
 	df12.reset_index(drop=True,inplace=True)
@@ -162,18 +167,19 @@ def dec_tree(dft,dft2p):
 	#create X and y arrays for decision tree
 	#fillna just to make sure no NAN to foul up algorithm
 	y = dft.pop('Revenue').fillna(method = 'ffill').as_matrix()
-	X = dft.drop('IDX', axis = 1, inplace=True).fillna(method = 'ffill').as_matrix()
-	X = pd.get_dummies(X)
+	X = dft.drop(['IDX','Qtr','Country'], axis = 1, inplace=True).fillna(method = 'ffill')
+	X = pd.get_dummies(X).as_matrix()
 	X = StandardScaler().fit_transform(X)
-	x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=71, stratify=y)
-	dtr = DecisionTreeRegressor(random_state=71, class_weight='balanced', max_depth=3, max_features='sqrt')
+	x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=71)
+	dtr = DecisionTreeRegressor(random_state=71, max_depth=5, max_features='sqrt')
 	dtr.fit(x_train, y_train)
 	dtr_result=dtr.predict(x_test)
 	dtr_mse = mean_squared_error(dtr_result, y_test)
-	dtr_cat = dtr.fit(X,y)
+	dtr.fit(X,y)
 	dtrpred = dtr.predict(X)
 	dtrpred_mse=mean_squared_error(dtrpred,y)
-	return dtrpred,dtrpred_mse,dtr_score(X,y)
+	dtrpred_score = dtr.score(X,y)
+	return dtrpred,dtrpred_mse,dtrpred_score
 
 def split_add_data(dfp,dtrpred):
 	y = dfp.pop(Revenue).fillna(method = 'ffill').as_matrix()
@@ -208,20 +214,24 @@ def ada_boost(xtrain,xtest,ytrain,ytest,df2p):
 	abc_score = abc.score(xtrain,ytrain)
 	return abc_predict_mse,abc_cm,abc_predict,abc_features,abc_score
 
-def plot_confusion_matrix(cm, classes,
+def plot_confusion_matrix(cm, classes = ['Positive', 'Negative'],
                           normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+	plt.imshow(cm, interpolation='nearest', cmap=cmap)
+	plt.title(title)
+	plt.colorbar()
+	tick_marks = np.arange(len(classes))
+	plt.xticks(tick_marks, classes, rotation=45)
+	plt.yticks(tick_marks, classes)
+	thresh = cm.max() / 2.
+	for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+	    plt.text(j, i, cm[i, j],
+	             horizontalalignment="center",
+	             color="white" if cm[i, j] > thresh else "black")
+	plt.tight_layout()
+	plt.ylabel('True Label')
+	plt.xlabel('Predicted Label')
 	
 	
 if __name__ == '__main__':
@@ -229,30 +239,29 @@ if __name__ == '__main__':
 	#restrict to USA and Canada dealers
 	df = df[df.Region == 'US & CANADA']
 	#drop unwanted category columns for pylibFM
-	cols = ['Country', 'RTM', 'Function', 'Customer_Size', 'NID', 'Customer_Segment']
-	dtcols = ['Country', 'RTM', 'Function', 'Customer_Size', 'Qtr', 'Customer_Segment']
+	cols = ['Country', 'RTM', 'Function', 'Customer_Size', 'NID', 'Customer_Segment','Region','NID', 'Year', 'Qtr', 'Certification']
+	dtcols = ['Country', 'RTM', 'Function', 'Customer_Size', 'Qtr', 'Customer_Segment', 'Certification']
 	#drop the unwanted cols - dfdt is for decision tree and dff for pylibFM
-	dfdt = df[dtcols]
+	dft = df[dtcols]
 	dff = df.drop(cols, axis=1)
-	#Create data for factorization engine
-	dff = factor_data(dff)
 	#Create data dictionaries for factorization
-	X,y,df_data =fit_train_dct(dff)
+	X,y,df_data = melt_train_dict(dff)
 	#create training and test data
 	Xtrain,Xtest,ytrain,ytest=train_test_split(X,y,random_state=71)
 	#create prediction sets
-	Xpred, df_predict = fit_pred_dct(dff)
+	Xpred, df_predict = melt_pred_dict(dff)
 	#vectorize data sets to fit fm model
 	X_train, X_test, X_pred = vectorize(Xtrain,Xtest,Xpred)
 	#fit FM model
-	fm = plf.FM(num_factors=10, num_iter=100, verbose=True, task="regression", initial_learning_rate=0.002, learning_rate_schedule="optimal")
+	fm = plf.FM(num_factors=5, num_iter=50, verbose=True, task="regression", initial_learning_rate=0.002, learning_rate_schedule="optimal")
 	fm.fit(X_train,ytrain)
 	#test prediction
 	y_test = fm.predict(X_test)
+	mse_fm=mean_squared_error(ytest,y_test)
 	print("FM MSE: %.4f" % mean_squared_error(ytest,y_test))
 	y_pred = fm.predict(X_pred)
 	#merge factored data to make new data set dfdata without categorical data
-	dfdata= d.merge_data(df_predict, y_pred, df_data)
+	dfdata= merge_data(df_predict, y_pred, df_data)
 	#load revenue by quarter and IDX data
 	df11 = load_data('df11.csv')
 	df12 = load_data('df12.csv')
@@ -261,7 +270,7 @@ if __name__ == '__main__':
 	df2 = load_data('df2.csv')
 	#merge quarterly revenue data into new fitted data dfdata to be called dfp
 	#dfq2 file is x matrix for last quarter predictors in random forest
-	dfp,dfq2 = data_prep(dfdata,df11,df12,df13,df14,df2,length=963)
+	#dfp,dfq2 = data_prep(dfdata,df11,df12,df13,df14,df2,length=963)
 	
 	
 	
