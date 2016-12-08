@@ -137,16 +137,16 @@ for i in range(len(df11)):
 
 df_one = df_one.sort_values(by = ['Qtr', 'NID'], axis = 0, ascending = [1,1])
 df_two = df_two.sort_values(by = ['Qtr', 'NID'], axis = 0, ascending = [1,1])
-def set_r(df,s,t):
+def set_revenue(df,s,t):
 	import random as ra
-for i in range(len(df14)):
-	x = df3.Mean_Sat.iloc[i]
-	if x < 3:
-		y = s*x
-	else:
-		y = 5 + t*x
-	a = round(ra.normalvariate(y,1),2)
-	df14.set_value(i, 'Revenue', a)
+	for i in range(len(df)):
+		x = df.Mean_Sat.iloc[i]
+		if x < 3:
+			y = s*x
+		else:
+			y = 15 + t*x
+		a = round(ra.normalvariate(y,1),2)
+		df.set_value(i, 'Revenue', a)
 	return df
 	
 def rank(df):
