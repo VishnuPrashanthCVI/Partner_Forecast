@@ -103,89 +103,103 @@ def merge_data(df_predict, y_pred, df_data, qtr):
 def data_prep(dfdata, df12, df13, df14, df2):
 	#requires dfdata to be the filled data from the recommender
 	#the revenue files need to be loaded in main file 
-	dfq11 = dfdata[dfdata.Qtr==1].reset_index(drop=True)
-	dfq12 = dfdata[dfdata.Qtr==2].reset_index(drop=True)
-	dfq13 = dfdata[dfdata.Qtr==3].reset_index(drop=True)
-	dfq14 = dfdata[dfdata.Qtr==4].reset_index(drop=True)
-	dfq2 = dfdata[dfdata.Qtr==5].reset_index(drop=True)
-	df11p=pd.concat([dfq11,df12],axis=1,ignore_index=True)
-	df12p=pd.concat([dfq12,df13],axis=1,ignore_index=True)
-	df13p=pd.concat([dfq13,df14],axis=1,ignore_index=True)
-	df14p=pd.concat([dfq14,df2],axis=1,ignore_index=True)
+	dfq11 = dfdata[dfdata.Qtr==1].reset_index(drop=True)[:1926]
+	dfq12 = dfdata[dfdata.Qtr==2].reset_index(drop=True)[:1926]
+	dfq13 = dfdata[dfdata.Qtr==3].reset_index(drop=True)[:1926]
+	dfq14 = dfdata[dfdata.Qtr==4].reset_index(drop=True)[:1926]
+	dfq2 = dfdata[dfdata.Qtr==5].reset_index(drop=True)[:1926]
+	df12 = df12[:1926]
+	df13 = df13[:1926]
+	df14 = df14[:1926]
+	df2 = df2[:1926]
+	df11p=pd.concat([dfq11,df12],axis=1)
+	df12p=pd.concat([dfq12,df13],axis=1)
+	df13p=pd.concat([dfq13,df14],axis=1)
+	df14p=pd.concat([dfq14,df2],axis=1)
 	dfp = pd.concat([df11p,df12p,df13p,df14p],ignore_index=True)
 	return dfp,dfq2
 	
 def dtdata_prep(dft, df12, df13, df14, df2):
 	#requires dft = partner categorical data and the revenue files
-	dftq11 = dft[dft.Qtr==1].reset_index(drop=True)
-	dftq12 = dft[dft.Qtr==2].reset_index(drop=True)
-	dftq13 = dft[dft.Qtr==3].reset_index(drop=True)
-	dftq14 = dft[dft.Qtr==4].reset_index(drop=True)
-	dftq2 = dft[dft.Qtr==5].reset_index(drop=True)
-	df11p=pd.concat([dftq11,df12],axis=1,ignore_index=True)
-	df12p=pd.concat([dftq12,df13],axis=1,ignore_index=True)
-	df13p=pd.concat([dftq13,df14],axis=1,ignore_index=True)
-	df14p=pd.concat([dftq14,df2],axis=1,ignore_index=True)
-	dft = pd.concat([df11p,df12p,df13p,df14p],ignore_index=True)
-	return dft, dftq2
+	dftq11 = dft[dft.Qtr==1].reset_index(drop=True)[:1926]
+	dftq12 = dft[dft.Qtr==2].reset_index(drop=True)[:1926]
+	dftq13 = dft[dft.Qtr==3].reset_index(drop=True)[:1926]
+	dftq14 = dft[dft.Qtr==4].reset_index(drop=True)[:1926]
+	dftq2 = dft[dft.Qtr==5].reset_index(drop=True)[:1926]
+	df12 = df12[:1926]
+	df13 = df13[:1926]
+	df14 = df14[:1926]
+	df2 = df2[:1926]	
+	df11p=pd.concat([dftq11,df12],axis=1)
+	df12p=pd.concat([dftq12,df13],axis=1)
+	df13p=pd.concat([dftq13,df14],axis=1)
+	df14p=pd.concat([dftq14,df2],axis=1)
+	dftt = pd.concat([df11p,df12p,df13p,df14p],ignore_index=True)
+	dftp = pd.concat([dftq11,dftq12,dftq13,dftq14,dftq2],ignore_index=True)
+	return dftt, dftp
 
-def dec_tree(dft,dftq2):
+def dec_tree(dftt,dftp):
 	#create X and y arrays for decision tree
 	X=pd.DataFrame([])
 	y=pd.DataFrame([])
+	Z=pd.DataFrame([])
 	#fillna just to make sure no NAN to foul up algorithm
-	y = dft.pop('Revenue').fillna(method = 'ffill').as_matrix()
-	X = dft.drop(['IDX','Qtr','Country'], axis = 1).fillna(method = 'ffill')
-	X = pd.get_dummies(X).as_matrix()
-	X = StandardScaler().fit_transform(X)
-	x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=71)
+	y = dftt.pop('Revenue').fillna(method = 'ffill').as_matrix()
+	X = dftt.drop(['Qtr','Country','Customer_Size'], axis = 1).fillna(method = 'ffill')
+	Z = pd.get_dummies(X).as_matrix()
+	Z = StandardScaler().fit_transform(Z)
+	x_train, x_test, y_train, y_test = train_test_split(Z, y, test_size=.2, random_state=71)
 	dtr = DecisionTreeRegressor(random_state=71, max_depth=5, max_features=5)
 	dtr.fit(x_train, y_train)
 	dtr_result=dtr.predict(x_test)
 	dtr_mse = mean_squared_error(dtr_result, y_test)
-	dtr.fit(X,y)
-	dtrpred = dtr.predict(X)
-	dtrpred_mse=mean_squared_error(dtrpred,y)
-	dtrpred_score = dtr.score(X,y)
-	return dtrpred,dtrpred_mse,dtrpred_score
+	P = dftp.drop(['Qtr','Country','Customer_Size'], axis = 1).fillna(method='ffill')
+	T = pd.get_dummies(P).as_matrix()
+	T = StandardScaler().fit_transform(T)
+	dtr.fit(Z,y)
+	dtrpred = dtr.predict(T)
+	return dtrpred,dtr_mse
 
-def split_add_data(dfp,dtrpred):
+def split_add_data(dfp,dfq2,dtrpred):
 	X = pd.DataFrame([])
 	y = pd.DataFrame([])
 	y = dfp.pop('Revenue').fillna(method = 'ffill').as_matrix()
 	#fill any na's left no matter source as data for random forest
 	#add predictions from decision tree
-	dfp['Prediction'] = dtrpred
-	X=dfp.drop(['IDX','Qtr'],axis=1)
-		#fill any na's left no matter source as data for random forest
-	X.fillna(method = 'ffill', inplace=True).as_matrix()
+	p = len(dfp)
+	dfp['Prediction'] = dtrpred[:p]
+	dfq2['Prediction'] = dtrpred[p:]
+	X=dfp.drop(['Qtr'],axis=1)
+	#fill any na's left no matter source as data for random forest
+	X.fillna(method = 'ffill', inplace=True)
+	X.as_matrix()
 	X = StandardScaler().fit_transform(X)
 	xtrain, xtest, ytrain, ytest = train_test_split(X, y, test_size=.2, random_state=71)
-	return X,y,xtrain,xtest,ytrain,ytest
+	return X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2
 	
 def random_forest(xtrain,xtest,ytrain,ytest,dfq2):	
-	rfc = RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=71, class_weight = 'balanced')
+	rfc = RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=71)
 	rfc.fit(xtrain, ytrain)
 	rfc_result = rfc.predict(xtest)
 	rfc_mse = mean_squared_error(rfc_result, ytest)
-	rfc_cm = confusion_matrix(rfc_result, ytest)
-	Xpred = StandardScaler().fit_transform(dfq2)
+	dfq = dfq2.drop('Qtr', axis = 1)
+	Xpred = StandardScaler().fit_transform(dfq)
 	rfc_predict = rfc.predict(Xpred)
-	rfc_features = rfc.feature_importances()
+	rfc_features = rfc.feature_importances_
 	rfc_score = rfc.score(xtrain,ytrain)
-	return rfc_mse,rfc_cm,rfc_predict,rfc_features,rfc_score
+	return rfc_mse,rfc_predict,rfc_features,rfc_score
 
 def ada_boost(xtrain,xtest,ytrain,ytest,dfq2):
-	abc = AdaBoostRegressor(DecisionTreeRegressor(class_weight = 'balanced'), learning_rate=0.1, n_estimators=100, random_state=71)
+	abc = AdaBoostRegressor(DecisionTreeRegressor(random_state=71, max_depth=5, max_features=5))
 	abc.fit(xtrain,ytrain)
 	abc_result = abc.predict(xtest)
 	abc_mse = mean_squared_error(abc_result, ytest)
-	abc_cm = confusion_matrix(abc_result, ytest)
-	Xpred = StandardScaler().fit_transform(dfq2)
+	dfq = dfq2.drop('Qtr', axis = 1)
+	Xpred = StandardScaler().fit_transform(dfq)
 	abc_predict = abc.predict(Xpred)
-	abc_features = abc.feature_importances()
+	abc_features = abc.feature_importances_
 	abc_score = abc.score(xtrain,ytrain)
-	return abc_predict_mse,abc_cm,abc_predict,abc_features,abc_score
+	return abc_mse,abc_predict,abc_features,abc_score
 
 def plot_confusion_matrix(cm, classes = ['Positive', 'Negative'],
                           normalize=False,
@@ -249,20 +263,24 @@ if __name__ == '__main__':
 	z=pd.DataFrame([])
 	x_train=z;x_test=z;y_train=z;y_test=z;X=z;y=z;ytrain=z;Xtrain=z;Xtest=z;ytrain=z;ytest=z;ypred=z;y_pred=z
 	#prepare data for decision tree on categoricals
-	dftt, dftq2 =dtdata_prep(dft,df12,df13,df14,df2)
+	dftt, dftp =dtdata_prep(dft,df12,df13,df14,df2)
 	#run decision tree on categorical data - dtrpred is predicted revenue
-	#dtrpred,dtrpred_mse,dtrpred_score=dec_tree(dftt,dfq2)
+	dtrpred,dtr_mse = dec_tree(dftt,dftp)
+	#prepare data to merge and for random forest
+	dfp, df2q = data_prep(dfdata, df12, df13, df14, df2)
+	#merge data for random forest
+	X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2=split_add_data(dfp,dfq2,dtrpred)
+	#run random forest
+	rfc_mse,rfc_predict,rfc_features,rfc_score=random_forest(xtrain,xtest,ytrain,ytest,dfq2)
+	#run adaboost regressor
+	abc_mse,abc_predict,abc_features,abc_score=ada_boost(xtrain,xtest,ytrain,ytest,dfq2)
 	
 	
 	
 	
 	
 	
-	
-	
-	
-	
-	
+
 
 
 

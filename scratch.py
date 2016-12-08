@@ -418,3 +418,20 @@ def random_forest_up(dfup,df2):
 	rfc_result = rfc.predict(x_test)
 	rfc_mse = mean_squared_error(rfc_result, y_test)
 	prediction = rfc.predict
+	
+	"df11 = load_data('df11.csv')
+	df12 = load_data('df12.csv')
+	df13 = load_data('df13.csv')
+	df14 = load_data('df14.csv')
+	df2 = load_data('df2.csv')
+	#prepare data for decision tree on categoricals
+	dftt, dft2p =dtdata_prep(dft,df12,df13,df14,df2)
+	#run decision tree on categorical data - dtrpred is predicted revenue
+	dtrpred,dtrpred_mse,dtrpred_score=dec_tree(dftt,dft2p)
+	#prepare data for random forest 
+	dfp,df2p = data_prep(dfdata,df12,df13,df14,df2)"
+	#X=[];y=[];xtrain=[];xtest=[];ytrain=[];ytest=[]
+	#X,y,xtrain,xtest,ytrain,ytest=split_add_data(dfp,dtrpred)
+	#merge quarterly revenue data into new fitted data dfdata to be called dfp
+	#dfq2 file is x matrix for last quarter predictors in random forest
+	#dfp,dfq2 = data_prep(dfdata,df11,df12,df13,df14,df2,length=963)'
