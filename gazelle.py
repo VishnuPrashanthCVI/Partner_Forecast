@@ -169,7 +169,7 @@ def split_add_data(dfp,dfq2,dtrpred):
 	p = len(dfp)
 	dfp['Prediction'] = dtrpred[:p]
 	dfq2['Prediction'] = dtrpred[p:]
-	X=dfp.drop(['Qtr'],axis=1)
+	X=dfp.drop(['Qtr','Mean_Sat'],axis=1)
 	#fill any na's left no matter source as data for random forest
 	X.fillna(method = 'ffill', inplace=True)
 	X.as_matrix()
@@ -178,16 +178,17 @@ def split_add_data(dfp,dfq2,dtrpred):
 	return X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2
 	
 def random_forest(xtrain,xtest,ytrain,ytest,dfq2):	
-	rfc = RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=71)
+	rfc = RandomForestRegressor(n_estimators=100, n_jobs=-1, random_state=71, verbose=True)
 	rfc.fit(xtrain, ytrain)
 	rfc_result = rfc.predict(xtest)
 	rfc_mse = mean_squared_error(rfc_result, ytest)
-	dfq = dfq2.drop('Qtr', axis = 1)
+	dfq = dfq2.drop(['Qtr','Mean_Sat'], axis = 1)
 	Xpred = StandardScaler().fit_transform(dfq)
 	rfc_predict = rfc.predict(Xpred)
 	rfc_features = rfc.feature_importances_
-	rfc_score = rfc.score(xtrain,ytrain)
-	return rfc_mse,rfc_predict,rfc_features,rfc_score
+	rfc_score_train = rfc.score(xtrain,ytrain)
+	rfc_score_test = rfc.score(xtest,ytest)
+	return rfc_mse,rfc_predict,rfc_features,rfc_score_train,rfc_score_test
 
 def ada_boost(xtrain,xtest,ytrain,ytest,dfq2):
 	abc = AdaBoostRegressor(DecisionTreeRegressor(random_state=71, max_depth=5, max_features=5))
@@ -267,14 +268,25 @@ if __name__ == '__main__':
 	#run decision tree on categorical data - dtrpred is predicted revenue
 	dtrpred,dtr_mse = dec_tree(dftt,dftp)
 	#prepare data to merge and for random forest
-	dfp, df2q = data_prep(dfdata, df12, df13, df14, df2)
+	dfp, dfq2 = data_prep(dfdata, df12, df13, df14, df2)
 	#merge data for random forest
 	X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2=split_add_data(dfp,dfq2,dtrpred)
 	#run random forest
-	rfc_mse,rfc_predict,rfc_features,rfc_score=random_forest(xtrain,xtest,ytrain,ytest,dfq2)
+	rfc_mse,rfc_predict,rfc_features,rfc_score_train,rfc_score_test = random_forest(xtrain,xtest,ytrain,ytest,dfq2)
 	#run adaboost regressor
-	abc_mse,abc_predict,abc_features,abc_score=ada_boost(xtrain,xtest,ytrain,ytest,dfq2)
+	#abc_mse,abc_predict,abc_features,abc_score=ada_boost(xtrain,xtest,ytrain,ytest,dfq2)
 	
+	#plot features by weight
+	features = pd.DataFrame(rfc_features)
+	features['Feature']=dfq2.drop(['Qtr','Mean_Sat'], axis = 1).columns
+	cols = ['Weight','Feature']
+	features.columns=cols
+	features.sort_values(by='Weight',inplace=True,ascending=False)
+	features.to_csv('features.csv',index=False)
+	#plot features
+	
+
+
 	
 	
 	
