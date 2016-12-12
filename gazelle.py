@@ -20,7 +20,7 @@ import sklearn as sk
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 from sklearn import tree
-import xlsxwriter as xlsx
+import xlsxwriter
 
 
 
@@ -337,8 +337,6 @@ if __name__ == '__main__':
 	Y = np.arange(3)
 	X = list(performance.Revenue/1000.)
 	f = list(performance.Rank)
-	x = np.arange(9)
-	labels = ['1','2','3','4','5','6','7','8','9']
 	width = .5
 	fig = plt.figure(figsize=(6,4))
 	plt.barh(Y,X,width,color='b')

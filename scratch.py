@@ -435,3 +435,14 @@ def random_forest_up(dfup,df2):
 	#merge quarterly revenue data into new fitted data dfdata to be called dfp
 	#dfq2 file is x matrix for last quarter predictors in random forest
 	#dfp,dfq2 = data_prep(dfdata,df11,df12,df13,df14,df2,length=963)'
+	
+	df = pd.DataFrame({'Data': [10, 20, 30, 20, 15, 30, 45]})
+
+# Create a Pandas Excel writer using XlsxWriter as the engine.
+writer = pd.ExcelWriter('pandas_simple.xlsx', engine='xlsxwriter')
+
+# Convert the dataframe to an XlsxWriter Excel object.
+df.to_excel(writer, sheet_name='Sheet1')
+
+# Close the Pandas Excel writer and output the Excel file.
+writer.save()
