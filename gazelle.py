@@ -41,19 +41,6 @@ def cols_strip(df):
 	df.columns = df.columns.str.strip().str.replace(' ', '_')
 	return df
 
-def set_revenue(dfq,s,t):
-	import random as ra
-	#f['Revenue']=range(len(dfq))
-	for i in range(len(dfq)):
-		x = dfq.Mean_Sat.iloc[i]
-		if x < 3:
-			y = s*x
-		else:
-			y = 15 + t*x
-		a = round(ra.normalvariate(y,1),2)
-		dfq.set_value(i, 'Revenue', a)
-	return dfq
-
 def set_idx(df):
 	#set unique sequential id number 
 	for i in range(len(df)):

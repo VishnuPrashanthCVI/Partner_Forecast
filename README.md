@@ -2,7 +2,9 @@
 Summary:  This python code forecasts sales and partner performance in a multi tier distribution channel.  The current development completes the filling of the spare data matrices using pylibfm, a matrix factorization library, identifies the important categorical data,e.g., level of training, in estimating sales, and random forests for the final estimation of sales by quarter.  The final stage achieved a remarkable 90% p value on the test data.
 Next Development:  The next model to be added is the switchpoint time series analysis using PYMC.  The Probabilistic model will be applied to the revenue history for each partner demonstrating high or low performance in the predicted quarter.
 
-Intent:  This description demonstrates the effectiveness of the program but does not intend to show the range of conclusions that are surfaced by the analysis.  For example, the causes of each partners performance is not displayed.
+Intent:  This description demonstrates the effectiveness of the program but does not intend to show the range of conclusions that are surfaced by the analysis.  For example, the causes of each partners performance is not displayed in this abbreviated description.
+
+Program:  Assuming all dependencies have been loaded,e.g., pylibfm, the primary program is gazelle.py.  Open ipython and enter 'run gazelle.py'.  The charts require manual intervention.  This program still requires further streamlining.  The program data.py is a file of useful tools and scratch.py is just a space for scripting out solution prototypes.
 
 Sample:  The data has been derived from multiple sources and randomized.  It follows the essential structure of partner management data using historical sales, categorical events, vendor ratings, and dealer opinions of the vendor capabilities.  The data itself is a mixture of continuous, ordinal, and categorical data.  Manipulating the data is still a manual exercise.  Many functions for manipulating the data are included in the data.py script library.
 
