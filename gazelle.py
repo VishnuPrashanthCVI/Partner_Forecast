@@ -20,6 +20,8 @@ import sklearn as sk
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 from sklearn import tree
+import xlsxwriter as xlsx
+
 
 
 def load_data(data):
@@ -273,10 +275,12 @@ if __name__ == '__main__':
 	X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2=split_add_data(dfp,dfq2,dtrpred)
 	#run random forest
 	rfc_mse,rfc_predict,rfc_features,rfc_score_train,rfc_score_test = random_forest(xtrain,xtest,ytrain,ytest,dfq2)
+	rfcmetrics=[rfc_mse,rfc_score_train,rfc_score_test]
+	rfcmetrics=[rfc_mse,rfc_score_train,rfc_score_test]
+	pd.DataFrame(rfcmetrics).to_csv('rfcmetrics.csv',index=False)
 	#run adaboost regressor
 	#abc_mse,abc_predict,abc_features,abc_score=ada_boost(xtrain,xtest,ytrain,ytest,dfq2)
-	
-	#plot features by weight
+		#plot features by weight
 	features = pd.DataFrame(rfc_features)
 	features['Feature']=dfq2.drop(['Qtr','Mean_Sat'], axis = 1).columns
 	cols = ['Weight','Feature']
@@ -284,6 +288,69 @@ if __name__ == '__main__':
 	features.sort_values(by='Weight',inplace=True,ascending=False)
 	features.to_csv('features.csv',index=False)
 	#plot features
+	Y = np.arange(10)
+	X = list(features.Weight[:10])
+	f = list(features.Feature[:10])
+	width = .5
+	fig = plt.figure(figsize=(8,6))
+	plt.barh(Y,X,width,color='b')
+	plt.ylabel('Feature',fontsize='large')
+	plt.xlabel('Weight',fontsize='large')
+	plt.yticks(Y+width/2.0,f,fontsize='medium')
+	plt.subplots_adjust(left=0.5)
+	plt.xlim(0,.2)
+	plt.title('Top Ten Features By Weight')
+	fig.savefig('features.png', dpi=fig.dpi)
+	plt.show()
+	plt.close()
+	#find performance by class = up, down, same
+	df3=pd.DataFrame(rfc_predict)
+	df3.columns=['Revenue']
+	t=.1
+	df2=df2[:len(df3)]
+	df3['IDX']=range(len(df3))
+	dfu=df3[df3.Revenue>=(1+t)*df2.Revenue]
+	dfd=df3[df3.Revenue<=(1-t)*df2.Revenue]
+	players=(dfu.shape[0],df3.shape[0]-dfd.shape[0]-dfu.shape[0],dfd.shape[0])
+	players_rev=(dfu.Revenue.sum(),df3.Revenue.sum()-dfu.Revenue.sum()-dfd.Revenue.sum(),dfd.Revenue.sum())
+	performance=pd.DataFrame()
+	performance['Rank']=['Up','Same','Down']
+	performance['Player']=players
+	performance['Revenue']=players_rev
+	performance.to_csv('Dealer Performance.csv',index=False)
+	#plot revenue and players
+	Y = np.arange(3)
+	X = list(performance.Player)
+	f = list(performance.Rank)
+	width = .5
+	fig = plt.figure(figsize=(6,4))
+	plt.barh(Y,X,width,color='b')
+	plt.ylabel('Rank',fontsize='large')
+	plt.xlabel('Count',fontsize='large')
+	plt.yticks(Y+width/2.0,f,fontsize='large')
+	plt.subplots_adjust(left=0.15,bottom=.2)
+	plt.title('Number of Partners By Rank')
+	fig.savefig('Partners.png', dpi=fig.dpi)
+	plt.show()#plot revenue and players
+	plt.close()
+	#compute sales forecasts and display
+	Y = np.arange(3)
+	X = list(performance.Revenue/1000.)
+	f = list(performance.Rank)
+	x = np.arange(9)
+	labels = ['1','2','3','4','5','6','7','8','9']
+	width = .5
+	fig = plt.figure(figsize=(6,4))
+	plt.barh(Y,X,width,color='b')
+	plt.ylabel('Rank',fontsize='large')
+	plt.xlabel('Revenue In Millions',fontsize='large')
+	plt.yticks(Y+width/2.0,f,fontsize='large')
+	plt.subplots_adjust(left=0.2,bottom=.2)
+	plt.title('Partners Revenue By Rank')
+	fig.savefig('Partners_Revenue.png', dpi=fig.dpi)
+	plt.show()
+	plt.close()
+	#plot sales history and forecast	
 	
 
 
