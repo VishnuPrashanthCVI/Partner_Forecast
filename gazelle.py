@@ -191,27 +191,6 @@ def ada_boost(xtrain,xtest,ytrain,ytest,dfq2):
 	abc_score = abc.score(xtrain,ytrain)
 	return abc_mse,abc_predict,abc_features,abc_score
 
-def plot_confusion_matrix(cm, classes = ['Positive', 'Negative'],
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-	plt.imshow(cm, interpolation='nearest', cmap=cmap)
-	plt.title(title)
-	plt.colorbar()
-	tick_marks = np.arange(len(classes))
-	plt.xticks(tick_marks, classes, rotation=45)
-	plt.yticks(tick_marks, classes)
-	
-	thresh = cm.max() / 2.
-	for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-	    plt.text(j, i, cm[i, j],
-	             horizontalalignment="center",
-	             color="white" if cm[i, j] > thresh else "black")
-	plt.tight_layout()
-	plt.ylabel('True Label')
-	plt.xlabel('Predicted Label')
-	
-	
 if __name__ == '__main__':
 	df = load_data('Partners_Data.csv')
 	#restrict to USA and Canada dealers
@@ -258,11 +237,12 @@ if __name__ == '__main__':
 	dtrpred,dtr_mse = dec_tree(dftt,dftp)
 	#prepare data to merge and for random forest
 	dfp, dfq2 = data_prep(dfdata, df12, df13, df14, df2)
+	#build table for bokeh
+	dfq2.to_csv('Partner_Data_Normalized.csv', index=False)
 	#merge data for random forest
 	X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2=split_add_data(dfp,dfq2,dtrpred)
 	#run random forest
 	rfc_mse,rfc_predict,rfc_features,rfc_score_train,rfc_score_test = random_forest(xtrain,xtest,ytrain,ytest,dfq2)
-	rfcmetrics=[rfc_mse,rfc_score_train,rfc_score_test]
 	rfcmetrics=[rfc_mse,rfc_score_train,rfc_score_test]
 	pd.DataFrame(rfcmetrics).to_csv('rfcmetrics.csv',index=False)
 	#run adaboost regressor
@@ -272,9 +252,11 @@ if __name__ == '__main__':
 	features['Feature']=dfq2.drop(['Qtr','Mean_Sat'], axis = 1).columns
 	cols = ['Weight','Feature']
 	features.columns=cols
+	#build bokeh feature set
+	features.to_csv('Features In Order.csv',index=False)
 	features.sort_values(by='Weight',inplace=True,ascending=False)
-	features.to_csv('features.csv',index=False)
-	#plot features
+	features.to_csv('Partner_Features_By_Weight.csv',index=False)
+	#plot features taking top ten
 	Y = np.arange(10)
 	X = list(features.Weight[:10])
 	f = list(features.Feature[:10])
@@ -288,14 +270,16 @@ if __name__ == '__main__':
 	plt.xlim(0,.2)
 	plt.title('Top Ten Features By Weight')
 	fig.savefig('features.png', dpi=fig.dpi)
-	plt.show()
-	plt.close()
 	#find performance by class = up, down, same
 	df3=pd.DataFrame(rfc_predict)
 	df3.columns=['Revenue']
+	#threshold for up or down
 	t=.1
 	df2=df2[:len(df3)]
+	#build revenue file for bokeh
 	df3['IDX']=range(len(df3))
+	df3.to_csv('Partners_Revenue.csv',index=False)
+	#parse out up and down performers
 	dfu=df3[df3.Revenue>=(1+t)*df2.Revenue]
 	dfd=df3[df3.Revenue<=(1-t)*df2.Revenue]
 	players=(dfu.shape[0],df3.shape[0]-dfd.shape[0]-dfu.shape[0],dfd.shape[0])
@@ -318,8 +302,6 @@ if __name__ == '__main__':
 	plt.subplots_adjust(left=0.15,bottom=.2)
 	plt.title('Number of Partners By Rank')
 	fig.savefig('Partners.png', dpi=fig.dpi)
-	plt.show()#plot revenue and players
-	plt.close()
 	#compute sales forecasts and display
 	Y = np.arange(3)
 	X = list(performance.Revenue/1000.)
@@ -333,8 +315,7 @@ if __name__ == '__main__':
 	plt.subplots_adjust(left=0.2,bottom=.2)
 	plt.title('Partners Revenue By Rank')
 	fig.savefig('Partners_Revenue.png', dpi=fig.dpi)
-	plt.show()
-	plt.close()
+
 	#plot sales history and forecast	
 	
 
