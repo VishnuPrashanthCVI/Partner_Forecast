@@ -237,9 +237,7 @@ if __name__ == '__main__':
 	dtrpred,dtr_mse = dec_tree(dftt,dftp)
 	#prepare data to merge and for random forest
 	dfp, dfq2 = data_prep(dfdata, df12, df13, df14, df2)
-	#build table for bokeh
-	dfq2.to_csv('Partner_Data_Normalized.csv', index=False)
-	#merge data for random forest
+		#merge data for random forest
 	X,y,xtrain,xtest,ytrain,ytest,dfp,dfq2=split_add_data(dfp,dfq2,dtrpred)
 	#run random forest
 	rfc_mse,rfc_predict,rfc_features,rfc_score_train,rfc_score_test = random_forest(xtrain,xtest,ytrain,ytest,dfq2)
@@ -248,12 +246,15 @@ if __name__ == '__main__':
 	#run adaboost regressor
 	#abc_mse,abc_predict,abc_features,abc_score=ada_boost(xtrain,xtest,ytrain,ytest,dfq2)
 		#plot features by weight
+	#build data table of input data for bokeh	
+	pdfill=dfq2.drop(['Qtr','Mean_Sat'], axis = 1)
+	pdfill.to_csv('Partner_Data_Complete.csv', index=False)
 	features = pd.DataFrame(rfc_features)
 	features['Feature']=dfq2.drop(['Qtr','Mean_Sat'], axis = 1).columns
 	cols = ['Weight','Feature']
 	features.columns=cols
 	#build bokeh feature set
-	features.to_csv('Features In Order.csv',index=False)
+	features.to_csv('Partner_Features_In_Order.csv',index=False)
 	features.sort_values(by='Weight',inplace=True,ascending=False)
 	features.to_csv('Partner_Features_By_Weight.csv',index=False)
 	#plot features taking top ten
