@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 """Bokeh accepts data in column format e.g., ColumnDataSource.  DataTables also require reshaping to column source.  Also the partner count in this sample is way too large for bokeh to display in dropowns etc.  This data has been filtered for top and bottom performers by setting n in def pick_partners"""
 
@@ -8,7 +9,7 @@ def load_data(data):
 	df = pd.read_csv(data, na_values = na_list)
 	return df
 	
-def pick_partners(df, n=10):
+def pick_partners(df, n=20):
 	dfp=df
 	dfp['Change']=(dfp['15']-dfp['12'])/df['12']
 	dfp.sort_values(by = 'Change', inplace=True, ascending=False)
@@ -41,7 +42,7 @@ def format_partners(df):
 	metrics.columns=['IDX','max','mean','min','predict']
 	return data, partners, metrics
 
-def find_importance(dfp,dfw,df):
+def find_importance(dfp,dfw,df,n=20):
 	dfdata=pd.DataFrame()
 	for i in range(len(df)):
 		dfrow=dfp[dfp.index==df.index[i]]
@@ -49,25 +50,19 @@ def find_importance(dfp,dfw,df):
 	dfww=dfw.drop('Feature',axis=1)
 	X = np.array(dfww)
 	d=dfdata.drop('IDX',axis=1)
+	cols=d.columns
+	d=StandardScaler().fit_transform(d)
 	dd=np.array(d)
 	pw=dd*X.T
 	pw=pd.DataFrame(pw)
 	pw.index=dfdata.index
-	pw.columns=d.columns
+	pw.columns=cols
 	pf=pd.DataFrame()
 	for i in range(len(pw)):
 		prow=pw.iloc[i,:]
 		prow.sort_values(inplace=True,ascending=False)
-		pf[prow.name]=list(prow.index[:10])
+		pf[prow.name]=list(prow.index[:n])
 	return pf
 	
 	
 	
-df = load_data('Partners_Mon_Revenue.csv')
-dfup,dfdown=pick_partners(df,n=10)
-dataup,partners_up,metrics_up=format_partners(dfup)
-datadown,partners_down,metrics_down=format_partners(dfdown)
-dfp=load_data('Partner_Data_Complete.csv')
-dfw=load_data('Partner_Features_In_Order.csv')
-features_up=find_importance(dfp,dfw,dfup)
-features_down=find_importance(dfp,dfw,dfdown)
