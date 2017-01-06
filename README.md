@@ -3,7 +3,9 @@ Summary:  This python code forecasts sales and partner performance in a multi ti
 
 Next Development:  The next model to be added is the switchpoint time series analysis using PYMC.  The probabilistic model will be applied to the revenue history for each partner demonstrating high or low performance in the predicted quarter.
 
-Visualization:  Bokeh will be used to provide visualization in the next round of development.  Flask is too complicated while Tableau is too expensive.  The interactive properties of Bokeh plus the open source availability is compelling if it performs as claimed.
+Visualization:  Bokeh will be used to provide visualization in the next round of development.  Flask will be used to create an html presentation.  The interactive properties of Bokeh plus the open source availability is compelling if as claimed.  Bokeh builds an html interactive interface to the python programs.  
+
+***THE BOKEH INTERFACE HAS BEEN COMPLETED FOR A DATA SLICE EQUAL TO THE TOP TWENTY AND BOTTOM TWENTY PREDICTED CHANGE.  THE DATA SLICE CAN BE MADE ON VIRTUALLY ANY FEATURE.  TO OBSERVE THE BOKEH VISUALIZATION CLONE THE GITHUB REPOSITORY, NAVIGATE THE TERMINAL TO THE CLONED REPOSITORY, OPEN A BROWSER, AND ENTER 'BOKEH SERVE  --SHOW BOKEH_UP.PY' AND 'BOKEH SERVE --SHOW BOKEH_DOWN.PY'.  THE VISUALIZATION IS INTERACTIVE AND WILL APPEAR AS TWO TABS IN YOUR BROWSER.***
 
 Intent:  This description demonstrates the effectiveness of the ensemble predicting sales by individual partner but does not intend to show the range of conclusions that are surfaced by the analysis.  For example, the causes of each partners performance is not displayed in this abbreviated description.  
 
