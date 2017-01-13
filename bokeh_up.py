@@ -60,6 +60,8 @@ p1 = figure(title="Prior Months Revenue", plot_width=800, plot_height=500,tools=
 p1.line("M","R", source=timesource)
 p1.title.text_font_size = "25px"
 p1.title.align = "center"
+p1.xaxis.axis_label='Prior Months'
+p1.yaxis.axis_label='Monthly Revenue In Thousands'
 
 
 '''The next builds a table of most important features for each partner selected'''
