@@ -41,7 +41,7 @@ cols=features_down.columns
 cols=map(str,cols)
 features_down.columns = cols
 
-'''The next builds a data table to be dislayed so that the viewer can select the partner to be more carefully investigated - this will run from the terminal command as well a run bokeh_up.py in ipython.  After creating the html code just send the html code for review from other parties'''
+'''The next builds a data table to be dislayed so that the viewer can select the partner to be more carefully investigated'''
 tablesource = ColumnDataSource()
 tablesource.data=ColumnDataSource.from_df(metrics_down)
 columns = [TableColumn(field="IDX", title="Partner ID", width=100), TableColumn(field="max", title="Max Rev $M", width=100), TableColumn(field="mean", title="Mean Rev $M", width = 100), TableColumn(field="min", title="Min Rev $M",width = 100), TableColumn(field="predict", title="Predicted Rev $M",width = 150)]

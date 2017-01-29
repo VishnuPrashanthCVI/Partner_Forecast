@@ -10,6 +10,7 @@ from bokeh_data import load_data,pick_partners,format_partners,find_importance
 from bokeh.models import BoxSelectTool, LassoSelectTool
 #plot.select(BoxSelectTool).select_every_mousemove = False
 #plot.select(LassoSelectTool).select_every_mousemove = False
+from bokeh.embed import components
 
 '''load and construct column data sources'''
 df = load_data('Partners_Mon_Revenue.csv')
@@ -97,3 +98,6 @@ curdoc().add_root(layout)
 curdoc().title = "Top Twenty Partners"
 '''bokeh serve --show bokeh_up.py 
 enter in terminal opened in directory containing python code'''
+'''script, div = components(layout)
+print(script)
+print(div)'''
