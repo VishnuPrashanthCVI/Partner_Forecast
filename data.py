@@ -1,98 +1,157 @@
-	
-import numpy as np
 import pandas as pd
+import numpy as np
+import random
+from sklearn.utils import resample
+import pickle as pkl
 
-def load_data(data):
-	na_list = ["Don't Know", "No Experience", "Not Applicable"]
-	df = pd.read_csv(data, na_values = na_list)
-	return df
+#number of Partners
+n = 300 #original sample
+r = 100 #resample size
+rlist = [np.nan,5,5,5,4,4,4,3,2,np.nan]
+#create partner index
+ds = pd.DataFrame()
+ds['ID'] = range(1,n + 1)
 
-def sort_annual_data(df, year1, year2):
-	#subset raw data by year
-	df_one = df[df['Year'] == str(year1)]
-	df_two = df[df['Year'] == str(year2)]
-	return df_one, df_two
-	
-def anon_cols(df):	
-	#substitute anonymous string for data columns
-	df_dict ={} 
-	#Make dictionary of original columns names by row
-	for x in range(df.shape[1]):
-		df_dict[x] = df.columns[x]
-	#Rename columns to anonymous number equal to df_dict keys
-	anon = []
-	for i in range(1, 1+df.shape[1], 1):
-		a = str(i)
-		anon.append(a)
-	df.columns = anon	
-	return df, df_dict
+#create partner certification
+clist=['Platinum','Gold','Silver','Premier', 'Registered']
+Cert = []
+for i in range(n):
+	cert = random.choice(clist)
+	Cert.append(cert)
 
-def factor_data(df,x=1,y=3):
-	#remove unwanted columns from factor engine
-	y += 1
-	for i in range(x, y, 1):
-		df.drop(df.columns[i], axis = 1, inplace = True)
-	return df
-		
-def cols_strip(df):
-	#remove whitepaces and substitute spaces in names with  underscore
-	df.columns = df.columns.str.strip().str.replace(' ', '_')
-	return df		
-	
-def set_idx(df):
-	#set unique sequential id number 
-	for i in range(len(df)):
-		df = df.set_value(i,'IDX',str(i))
-	return df
-	
-def remove_chars(df, column):
-	#remove whitespaces alphabet and punctation from strings in columns
-	df.column = df.column.str.strip().str.replace(' ', '_')	
-	return df.column 
-	
-def fit_dict(df):
-	#create dcitionaries for factor matrix operation
-	dtrain = []
-	dpred=[]
-	y=[]
-	dfm = pd.melt(df,id_vars=['IDX'])
-	null_vec = pd.isnull(dfm.value)
-	not_null_vec = pd.notnull(dfm.value)
-	df_data = dfm[not_null_vec]
-	df_predict = dfm[null_vec]
-	for i in range(len(df_data)):
-		dtrain.append({'response_id':str(df_data.iloc[i,0]),'ques_id':str(df_data.iloc[i,1])})
-		y.append(float(df_data.iloc[i,2]))
-	for i in range(len(df_predict)):
-		dpred.append({'response_id': str(df_predict.iloc[i,0]),'ques_id': str(df_predict.iloc[i,1])})	
-	return dtrain,y,dpred
+#create partner primary channel
+dlist=['VAR', 'DVAR', 'DIST']
+RTM = []
+for i in range(n):
+	rtm = random.choice(dlist)
+	RTM.append(rtm)
 
-def vectorize_fit(Xtrain,Xtest,Xpred):
-	v = DictVectorizer()
-	X_train = v.fit_transform(Xtrain)
-	X_test = v.transform(Xtest)
-	X_pred = v.transform(Xpred)
-	return X_train,X_test,X_pred
-	
-def fit_fm(X):
-	fm = plf.FM(num_factors=10, num_iter=100, verbose=True, task="regression", initial_learning_rate=0.001, learning_rate_schedule="optimal")
-	
-	def plot_confusion_matrix(cm, classes = ['Positive', 'Negative'],
-	                          normalize=False,
-	                          title='Confusion matrix',
-	                          cmap=plt.cm.Blues):
-		plt.imshow(cm, interpolation='nearest', cmap=cmap)
-		plt.title(title)
-		plt.colorbar()
-		tick_marks = np.arange(len(classes))
-		plt.xticks(tick_marks, classes, rotation=45)
-		plt.yticks(tick_marks, classes)
-		
-		thresh = cm.max() / 2.
-		for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-		    plt.text(j, i, cm[i, j],
-		             horizontalalignment="center",
-		             color="white" if cm[i, j] > thresh else "black")
-		plt.tight_layout()
-		plt.ylabel('True Label')
-		plt.xlabel('Predicted Label')
+#create primary customer target
+pclist=['ENT', 'ENT', 'CAR', 'CAR', 'EDUC', 'GOVT', 'ENT']
+Cust = []
+for i in range(n):
+	cust = random.choice(pclist)
+	Cust.append(cust)
+
+#create credit rating
+credit = range(4,11)
+Credit = []
+for i in range(n):
+	cr = random.choice(credit)
+	Credit.append(cr)
+
+#create customer target size
+cslist=['10','100','250','1000','10000','25000']
+Cust_Size = []
+for i in range(n):
+	cust = random.choice(cslist)
+	Cust_Size.append(cust)
+
+#create territory
+tlist=['NE', 'SE', 'SW', 'NW', 'C']
+Terr = []
+for i in range(n):
+	terr = random.choice(tlist)
+	Terr.append(terr)
+
+#create basic data file
+ds['Cert'] = Cert
+ds['RTM'] = RTM
+ds['Cust'] = Cust
+ds['Cust_Size'] = Cust_Size
+ds['Credit'] = Credit
+ds['Territory'] = Terr
+
+#create multiple respondents of exec, sales, operations, staff
+#note resample is a numpy utility that works for pandas also
+dss = resample(ds,n_samples=r,random_state=71)
+ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
+slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
+Resp = []
+for i in range(n+r):
+	resp = random.choice(slist)
+	Resp.append(resp)
+ds['Resp'] = Resp
+ds.sort_values(by = 'ID', ascending=True, inplace=True)
+Resp = []
+
+#create general satisfaction questions
+questions = ['Satisfaction', 'Value_Potential', 'Expected_Relationship_Duration', 'Profit_Potential', 'Product_Quality', 'Product_Importance', 'Product_Breadth', 'Product_Competitiveness', 'Product_Training', 'Customer_Referral', 'Profit_Expectation', 'Effective_Communications', 'Price_Point', 'Margin', 'Brand_Requirement', 'Training_Effectiveness', 'Customer_Recognition', 'Problem_Solving']
+#gresp = np.zeros((n+r,len(questions)))
+
+
+for col in questions:
+	Resp = []
+	for i in range(n+r):
+		resp = random.choice(rlist)
+		Resp.append(resp)
+	ds[col] = Resp
+
+f = open('partner_sat_data_3_1.pkl', 'wb')
+pkl.dump(ds,f,-1)
+f.close()
+
+#create account team ratings
+questions = []
+Resp = []
+ds = pd.DataFrame()
+ds['ID'] = range(1,n + 1)
+questions = ['Acct_Mgr', 'Support_Mgr', 'Team_Ability', 'Team_Contribution', 'Operations_Ability', 'Acct_Team_Satisfaction', 'Team_Solutions', 'Overall_Satisfaction']
+for col in questions:
+	Resp = []
+	for i in range(n):
+		resp = random.choice(rlist)
+		Resp.append(resp)
+	ds[col] = Resp
+f = open('partner_acct_data_3_1.pkl', 'wb')
+pkl.dump(ds,f,-1)
+f.close()
+
+#create online ratings and usage data
+questions = []
+Resp = []
+ds = pd.DataFrame()
+ds['ID'] = range(1,n+1)
+questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
+
+for col in questions:
+	Resp = []
+	for i in range(n):
+		resp = random.choice(rlist)
+		Resp.append(resp)
+	ds[col] = Resp
+dss = resample(ds,n_samples=r,random_state=71)
+ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
+slist=['Engr', 'Sales', 'Sales']
+Resp = []
+for i in range(n+r):
+	resp = random.choice(slist)
+	Resp.append(resp)
+ds['Resp'] = Resp
+ds.sort_values(by = 'ID', ascending=True, inplace=True)
+questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
+for col in questions:
+	Resp = []
+	for i in range(ds.shape[0]):
+		resp = random.choice(rlist)
+		Resp.append(resp)
+	ds[col] = Resp
+
+f = open('partner_web_rating_3_1.pkl', 'wb')
+pkl.dump(ds,f,-1)
+f.close()
+
+#create company rankings of partner
+ds = pd.DataFrame()
+ds['ID'] = range(1,n+1)
+cols = ['Sales','Engr','Training','Support','Operations']
+for col in cols:
+	Resp = []
+	for i in range(ds.shape[0]):
+		resp = random.choice(rlist)
+		Resp.append(resp)
+	ds[col] = Resp
+
+f = open('partner_rating_3_1.pkl', 'wb')
+pkl.dump(ds,f,-1)
+f.close()
