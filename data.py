@@ -4,154 +4,245 @@ import random
 from sklearn.utils import resample
 import pickle as pkl
 
-#number of Partners
-n = 300 #original sample
-r = 100 #resample size
-rlist = [np.nan,5,5,5,4,4,4,3,2,np.nan]
+
 #create partner index
-ds = pd.DataFrame()
-ds['ID'] = range(1,n + 1)
+def part_regis(n, q, yr):
+	ds = pd.DataFrame()
+	ds['ID'] = range(1,n + 1)
+	#create partner certification
+	clist=['Platinum','Gold','Silver','Premier', 'Registered']
+	Cert = []
+	for i in range(n):
+		cert = random.choice(clist)
+		Cert.append(cert)
 
-#create partner certification
-clist=['Platinum','Gold','Silver','Premier', 'Registered']
-Cert = []
-for i in range(n):
-	cert = random.choice(clist)
-	Cert.append(cert)
+	#create partner primary channel
+	dlist=['VAR', 'DVAR', 'DIST']
+	RTM = []
+	for i in range(n):
+		rtm = random.choice(dlist)
+		RTM.append(rtm)
 
-#create partner primary channel
-dlist=['VAR', 'DVAR', 'DIST']
-RTM = []
-for i in range(n):
-	rtm = random.choice(dlist)
-	RTM.append(rtm)
+	#create primary customer target
+	pclist=['ENT', 'ENT', 'CAR', 'CAR', 'ENT', 'GOVT', 'ENT', 'EDUC']
+	Cust = []
+	for i in range(n):
+		cust = random.choice(pclist)
+		Cust.append(cust)
 
-#create primary customer target
-pclist=['ENT', 'ENT', 'CAR', 'CAR', 'EDUC', 'GOVT', 'ENT']
-Cust = []
-for i in range(n):
-	cust = random.choice(pclist)
-	Cust.append(cust)
+	#create credit rating
+	credit = range(4,11)
+	Credit = []
+	for i in range(n):
+		cr = random.choice(credit)
+		Credit.append(cr)
 
-#create credit rating
-credit = range(4,11)
-Credit = []
-for i in range(n):
-	cr = random.choice(credit)
-	Credit.append(cr)
+	#create customer target size
+	cslist=['10','100','250','1000','10000','25000']
+	Cust_Size = []
+	for i in range(n):
+		cust = random.choice(cslist)
+		Cust_Size.append(cust)
 
-#create customer target size
-cslist=['10','100','250','1000','10000','25000']
-Cust_Size = []
-for i in range(n):
-	cust = random.choice(cslist)
-	Cust_Size.append(cust)
+	#create territory
+	tlist=['NE', 'SE', 'SW', 'NW', 'C']
+	Terr = []
+	for i in range(n):
+		terr = random.choice(tlist)
+		Terr.append(terr)
 
-#create territory
-tlist=['NE', 'SE', 'SW', 'NW', 'C']
-Terr = []
-for i in range(n):
-	terr = random.choice(tlist)
-	Terr.append(terr)
+	#create basic data file
+	ds['Yr'] = yr
+	ds['Qtr'] = q
+	ds['Cert'] = Cert
+	ds['RTM'] = RTM
+	ds['Cust'] = Cust
+	ds['Cust_Size'] = Cust_Size
+	ds['Credit'] = Credit
+	ds['Territory'] = Terr
+	ds['Yr'] = yr
+	ds['Qtr'] = q
+	filestr = 'partner_reg_data_' + str(yr) + '_' + str(q) +'.pkl'
+	f = open(filestr, 'wb')
+	pkl.dump(ds,f,-1)
+	f.close()
+	ds = pd.DataFrame()
 
-#create basic data file
-ds['Cert'] = Cert
-ds['RTM'] = RTM
-ds['Cust'] = Cust
-ds['Cust_Size'] = Cust_Size
-ds['Credit'] = Credit
-ds['Territory'] = Terr
+#create company rankings of partner
+def mgt_ratings(n, q, yr, rlist):
+	ds = pd.DataFrame()
+	ds['ID'] = range(1,n+1)
+	cols = ['Sales','Engr','Training','Support','Operations','Expert']
+	for col in cols:
+		Resp = []
+		for i in range(ds.shape[0]):
+			resp = random.choice(rlist)
+			Resp.append(resp)
+		ds[col] = Resp
+	filestr = 'mgt_ratings_' + str(yr) + '_' + str(q) + '.pkl'
+	f = open(filestr, 'wb')
+	pkl.dump(ds,f,-1)
+	f.close()
+
+
+def part_web_act(n, q, yr, act1, act2):
+	ds = pd.DataFrame()
+	ds['ID'] = range(1,n+1)
+	cols = ['Bids','Quotes','Registrations','Inquiries','Sessions']
+	for col in cols:
+		Resp = []
+		for i in range(ds.shape[0]):
+			resp = random.randint(act1,act2)
+			Resp.append(resp)
+		ds[col] = Resp
+	filestr = 'web_activity_' + str(yr) + '_' + str(q) + '.pkl'
+	f = open(filestr, 'wb')
+	pkl.dump(ds,f,-1)
+	f.close()
+	ds = pd.DataFrame()
+
 
 #create multiple respondents of exec, sales, operations, staff
 #note resample is a numpy utility that works for pandas also
-dss = resample(ds,n_samples=r,random_state=71)
-ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
-slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
-Resp = []
-for i in range(n+r):
-	resp = random.choice(slist)
-	Resp.append(resp)
-ds['Resp'] = Resp
-ds.sort_values(by = 'ID', ascending=True, inplace=True)
-Resp = []
-
-#create general satisfaction questions
-questions = ['Satisfaction', 'Value_Potential', 'Expected_Relationship_Duration', 'Profit_Potential', 'Product_Quality', 'Product_Importance', 'Product_Breadth', 'Product_Competitiveness', 'Product_Training', 'Customer_Referral', 'Profit_Expectation', 'Effective_Communications', 'Price_Point', 'Margin', 'Brand_Requirement', 'Training_Effectiveness', 'Customer_Recognition', 'Problem_Solving']
-#gresp = np.zeros((n+r,len(questions)))
-
-
-for col in questions:
+def part_satisfaction(n, r, yr, q, rlist):
+	ds=pd.DataFrame()
+	ds['ID'] = range(1,n+1)
+	dss = resample(ds,n_samples=r,random_state=71)
+	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
+	slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
 	Resp = []
 	for i in range(n+r):
-		resp = random.choice(rlist)
+		resp = random.choice(slist)
 		Resp.append(resp)
-	ds[col] = Resp
+	ds['Resp'] = Resp
+	ds.sort_values(by = 'ID', ascending=True, inplace=True)
+	Resp = []
 
-f = open('partner_sat_data_3_1.pkl', 'wb')
-pkl.dump(ds,f,-1)
-f.close()
+#create general satisfaction questions
+	questions = ['Satisfaction', 'Value_Potential', 'Expected_Relationship_Duration', 'Profit_Potential', 'Product_Quality', 'Product_Importance', 'Product_Breadth', 'Product_Competitiveness', 'Product_Training', 'Customer_Referral', 'Profit_Expectation', 'Effective_Communications', 'Price_Point', 'Margin', 'Brand_Requirement', 'Training_Effectiveness', 'Customer_Recognition', 'Problem_Solving']
+
+	for col in questions:
+		Resp = []
+		for i in range(n+r):
+			resp = random.choice(rlist)
+			Resp.append(resp)
+		ds[col] = Resp
+	filestr = 'partner_sat_data' + str(yr) + '_' + str(q) + '.pkl'
+	f = open(filestr, 'wb')
+	pkl.dump(ds,f,-1)
+	f.close()
+	ds = pd.DataFrame()
+	questions = []
 
 #create account team ratings
-questions = []
-Resp = []
-ds = pd.DataFrame()
-ds['ID'] = range(1,n + 1)
-questions = ['Acct_Mgr', 'Support_Mgr', 'Team_Ability', 'Team_Contribution', 'Operations_Ability', 'Acct_Team_Satisfaction', 'Team_Solutions', 'Overall_Satisfaction']
-for col in questions:
+def part_team_sat(n, r, yr, q, rlist):
+	ds=pd.DataFrame()
+	ds['ID'] = range(1,n+1)
+	dss = resample(ds,n_samples=r,random_state=71)
+	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
+	slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
 	Resp = []
-	for i in range(n):
-		resp = random.choice(rlist)
+	for i in range(n+r):
+		resp = random.choice(slist)
 		Resp.append(resp)
-	ds[col] = Resp
-f = open('partner_acct_data_3_1.pkl', 'wb')
-pkl.dump(ds,f,-1)
-f.close()
-
-#create online ratings and usage data
-questions = []
-Resp = []
-ds = pd.DataFrame()
-ds['ID'] = range(1,n+1)
-questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
-
-for col in questions:
+	ds['Resp'] = Resp
+	ds.sort_values(by = 'ID', ascending=True, inplace=True)
 	Resp = []
-	for i in range(n):
-		resp = random.choice(rlist)
-		Resp.append(resp)
-	ds[col] = Resp
-dss = resample(ds,n_samples=r,random_state=71)
-ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
-slist=['Engr', 'Sales', 'Sales']
-Resp = []
-for i in range(n+r):
-	resp = random.choice(slist)
-	Resp.append(resp)
-ds['Resp'] = Resp
-ds.sort_values(by = 'ID', ascending=True, inplace=True)
-questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
-for col in questions:
+
+	questions = ['Acct_Mgr', 'Support_Mgr', 'Team_Ability', 'Team_Contribution', 'Operations_Ability', 'Acct_Team_Satisfaction', 'Team_Solutions', 'Overall_Satisfaction']
+	for col in questions:
+		Resp = []
+		for i in range(n + r):
+			resp = random.choice(rlist)
+			Resp.append(resp)
+		ds[col] = Resp
+
+	filestr = 'part_team_rating'+str(yr)+'_'+str(q)+'.pkl'
+	f = open(filestr, 'wb')
+	pkl.dump(ds,f,-1)
+	f.close()
+
+
+def part_web_sat(n, r, yr, q, rlist):
+	ds=pd.DataFrame()
+	ds['ID'] = range(1,n+1)
+	dss = resample(ds,n_samples=r,random_state=71)
+	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
+	slist=['Engr', 'Sales', 'Sales','Opns','Staff']
 	Resp = []
-	for i in range(ds.shape[0]):
-		resp = random.choice(rlist)
+	for i in range(n+r):
+		resp = random.choice(slist)
 		Resp.append(resp)
-	ds[col] = Resp
-
-f = open('partner_web_rating_3_1.pkl', 'wb')
-pkl.dump(ds,f,-1)
-f.close()
-
-#create company rankings of partner
-ds = pd.DataFrame()
-ds['ID'] = range(1,n+1)
-cols = ['Sales','Engr','Training','Support','Operations']
-for col in cols:
+	ds['Resp'] = Resp
+	ds.sort_values(by = 'ID', ascending=True, inplace=True)
 	Resp = []
-	for i in range(ds.shape[0]):
-		resp = random.choice(rlist)
-		Resp.append(resp)
-	ds[col] = Resp
+	questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
 
-f = open('partner_rating_3_1.pkl', 'wb')
-pkl.dump(ds,f,-1)
-f.close()
+	for col in questions:
+		Resp = []
+		for i in range(n + r):
+			resp = random.choice(rlist)
+			Resp.append(resp)
+		ds[col] = Resp
+
+	filestr = 'part_web_rating'+str(yr)+'_'+str(q)+'.pkl'
+	f = open(filestr, 'wb')
+	pkl.dump(ds,f,-1)
+	f.close()
+
+if __name__ == '__main__':
+
+	n = 300
+	r = 100
+	qtrs = [1,2,3,4]
+	yrs= [1,2,3]
+
+	for year in yrs:
+		yr = year
+		for qtr in qtrs:
+			q = qtr
+			if yr == 1 and q == 1:
+				rlist = [np.nan,4,4,3,3,3,2,2,1,np.nan]
+				act1=10;act2=50
+			if yr == 1 and q == 2:
+				rlist = [np.nan,4,4,4,3,3,2,2,1,np.nan]
+				act1=15;act2=60
+			if yr == 1 and q == 3:
+				rlist = [np.nan,5,4,4,3,3,2,2,1,np.nan]
+				act1=20;act2=70
+			if yr == 1 and q == 4:
+				rlist = [np.nan,5,4,4,3,3,3,2,1,np.nan]
+				act1=25;act2=70
+			if yr == 2 and q == 1:
+				rlist = [np.nan,5,4,4,4,3,3,2,1,np.nan]
+				act1=30;act2=80
+			if yr == 2 and q == 2:
+				rlist = [np.nan,5,4,4,4,3,3,2,1,np.nan]
+				act1=35;act2=80
+			if yr == 2 and q == 2:
+				rlist = [np.nan,5,4,4,4,3,3,2,2,np.nan]
+				act1=40;act2=85
+			if yr == 2 and q == 3:
+				rlist = [np.nan,5,4,4,4,3,3,2,2,np.nan]
+				act1=45;act2=90
+			if yr == 2 and q == 4:
+				rlist = [np.nan,5,5,4,4,3,3,2,2,np.nan]
+				act1=50;act2=100
+			if yr == 3 and q == 1:
+				rlist = [np.nan,5,5,4,4,4,3,3,2,np.nan]
+				act1=50;act2=100
+			if yr == 3 and q == 2:
+				rlist = [np.nan,5,5,5,4,4,3,3,2,np.nan]
+				act1=65;act2=115
+			if yr == 3 and q == 3:
+				rlist = [np.nan,5,5,5,4,4,4,3,2,np.nan]
+				act1=75;act2=125
+			if yr == 3 and q == 4:
+				rlist = [np.nan,5,5,5,4,4,3,3,2,np.nan]
+				act1=75;act2=135
+			part_regis(n, q, yr)
+			mgt_ratings(n, q, yr, rlist)
+			part_web_act(n, q, yr, act1, act2)
+			part_satisfaction(n, r, yr, q, rlist)
+			part_web_sat(n, r, yr, q, rlist)
+			part_team_sat(n, r, yr, q, rlist)
