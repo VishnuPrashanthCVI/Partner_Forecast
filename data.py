@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import random
+import random as ra
 from sklearn.utils import resample
 import pickle as pkl
 
@@ -13,42 +13,42 @@ def part_regis(n, q, yr):
 	clist=['Platinum','Gold','Silver','Premier', 'Registered']
 	Cert = []
 	for i in range(n):
-		cert = random.choice(clist)
+		cert = ra.choice(clist)
 		Cert.append(cert)
 
 	#create partner primary channel
 	dlist=['VAR', 'DVAR', 'DIST']
 	RTM = []
 	for i in range(n):
-		rtm = random.choice(dlist)
+		rtm = ra.choice(dlist)
 		RTM.append(rtm)
 
 	#create primary customer target
 	pclist=['ENT', 'ENT', 'CAR', 'CAR', 'ENT', 'GOVT', 'ENT', 'EDUC']
 	Cust = []
 	for i in range(n):
-		cust = random.choice(pclist)
+		cust = ra.choice(pclist)
 		Cust.append(cust)
 
 	#create credit rating
 	credit = range(4,11)
 	Credit = []
 	for i in range(n):
-		cr = random.choice(credit)
+		cr = ra.choice(credit)
 		Credit.append(cr)
 
 	#create customer target size
 	cslist=['10','100','250','1000','10000','25000']
 	Cust_Size = []
 	for i in range(n):
-		cust = random.choice(cslist)
+		cust = ra.choice(cslist)
 		Cust_Size.append(cust)
 
 	#create territory
 	tlist=['NE', 'SE', 'SW', 'NW', 'C']
 	Terr = []
 	for i in range(n):
-		terr = random.choice(tlist)
+		terr = ra.choice(tlist)
 		Terr.append(terr)
 
 	#create basic data file
@@ -62,24 +62,27 @@ def part_regis(n, q, yr):
 	ds['Territory'] = Terr
 	ds['Yr'] = yr
 	ds['Qtr'] = q
-	filestr = 'partner_reg_data_' + str(yr) + '_' + str(q) +'.pkl'
+	filestr = 'o_partner_reg_data_' + str(yr) + '_' + str(q) +'.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
 	f.close()
 	ds = pd.DataFrame()
 
 #create company rankings of partner
-def mgt_ratings(n, q, yr, rlist):
+
+def mgt_ratings(n, q, yr, rmlist):
 	ds = pd.DataFrame()
 	ds['ID'] = range(1,n+1)
 	cols = ['Sales','Engr','Training','Support','Operations','Expert']
-	for col in cols:
+	for i in range(len(cols)):
+		rml = []
+		rml = rmlist[i]
 		Resp = []
-		for i in range(ds.shape[0]):
-			resp = random.choice(rlist)
+		for j in range(ds.shape[0]):
+			resp = ra.choice(rml)
 			Resp.append(resp)
-		ds[col] = Resp
-	filestr = 'mgt_ratings_' + str(yr) + '_' + str(q) + '.pkl'
+		ds[cols[i]] = Resp
+	filestr = 'o_mgt_ratings_' + str(yr) + '_' + str(q) + '.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
 	f.close()
@@ -92,10 +95,10 @@ def part_web_act(n, q, yr, act1, act2):
 	for col in cols:
 		Resp = []
 		for i in range(ds.shape[0]):
-			resp = random.randint(act1,act2)
+			resp = ra.randint(act1,act2)
 			Resp.append(resp)
 		ds[col] = Resp
-	filestr = 'web_activity_' + str(yr) + '_' + str(q) + '.pkl'
+	filestr = 'o_web_activity_' + str(yr) + '_' + str(q) + '.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
 	f.close()
@@ -111,28 +114,28 @@ def part_satisfaction(n, r, yr, q, rlist):
 	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
 	slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
 	Resp = []
-	for i in range(n+r):
-		resp = random.choice(slist)
+	for i in range(ds.shape[0]):
+		resp = ra.choice(slist)
 		Resp.append(resp)
 	ds['Resp'] = Resp
 	ds.sort_values(by = 'ID', ascending=True, inplace=True)
-	Resp = []
 
 #create general satisfaction questions
 	questions = ['Satisfaction', 'Value_Potential', 'Expected_Relationship_Duration', 'Profit_Potential', 'Product_Quality', 'Product_Importance', 'Product_Breadth', 'Product_Competitiveness', 'Product_Training', 'Customer_Referral', 'Profit_Expectation', 'Effective_Communications', 'Price_Point', 'Margin', 'Brand_Requirement', 'Training_Effectiveness', 'Customer_Recognition', 'Problem_Solving']
 
-	for col in questions:
+	for i  in range(len(questions)):
 		Resp = []
-		for i in range(n+r):
-			resp = random.choice(rlist)
+		rsl = []
+		rsl = rlist[i]
+		for j in range(ds.shape[0]):
+			resp = ra.choice(rsl)
 			Resp.append(resp)
-		ds[col] = Resp
-	filestr = 'partner_sat_data' + str(yr) + '_' + str(q) + '.pkl'
+		ds[questions[i]] = Resp
+	filestr = 'o_partner_sat_data' + str(yr) + '_' + str(q) + '.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
 	f.close()
-	ds = pd.DataFrame()
-	questions = []
+
 
 #create account team ratings
 def part_team_sat(n, r, yr, q, rlist):
@@ -143,21 +146,22 @@ def part_team_sat(n, r, yr, q, rlist):
 	slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
 	Resp = []
 	for i in range(n+r):
-		resp = random.choice(slist)
+		resp = ra.choice(slist)
 		Resp.append(resp)
 	ds['Resp'] = Resp
 	ds.sort_values(by = 'ID', ascending=True, inplace=True)
 	Resp = []
 
 	questions = ['Acct_Mgr', 'Support_Mgr', 'Team_Ability', 'Team_Contribution', 'Operations_Ability', 'Acct_Team_Satisfaction', 'Team_Solutions', 'Overall_Satisfaction']
-	for col in questions:
+	for i  in range(len(questions)):
 		Resp = []
-		for i in range(n + r):
-			resp = random.choice(rlist)
+		rsl = []
+		rsl = rlist[i]
+		for j in range(ds.shape[0]):
+			resp = ra.choice(rsl)
 			Resp.append(resp)
-		ds[col] = Resp
-
-	filestr = 'part_team_rating'+str(yr)+'_'+str(q)+'.pkl'
+		ds[questions[i]] = Resp
+	filestr = 'o_part_team_rating'+str(yr)+'_'+str(q)+'.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
 	f.close()
@@ -171,21 +175,20 @@ def part_web_sat(n, r, yr, q, rlist):
 	slist=['Engr', 'Sales', 'Sales','Opns','Staff']
 	Resp = []
 	for i in range(n+r):
-		resp = random.choice(slist)
+		resp = ra.choice(slist)
 		Resp.append(resp)
 	ds['Resp'] = Resp
 	ds.sort_values(by = 'ID', ascending=True, inplace=True)
-	Resp = []
 	questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
-
-	for col in questions:
+	for i  in range(len(questions)):
 		Resp = []
-		for i in range(n + r):
-			resp = random.choice(rlist)
+		rsl = []
+		rsl = rlist[i]
+		for j in range(ds.shape[0]):
+			resp = ra.choice(rsl)
 			Resp.append(resp)
-		ds[col] = Resp
-
-	filestr = 'part_web_rating'+str(yr)+'_'+str(q)+'.pkl'
+		ds[questions[i]] = Resp
+	filestr = 'o_part_web_rating'+str(yr)+'_'+str(q)+'.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
 	f.close()
@@ -196,52 +199,232 @@ if __name__ == '__main__':
 	r = 100
 	qtrs = [1,2,3,4]
 	yrs= [1,2,3]
-
-	for year in yrs:
-		yr = year
-		for qtr in qtrs:
-			q = qtr
+	rlist = []
+	rmlist = []
+	rl = []
+	rml = []
+	for yr in yrs:
+		for q in qtrs:
 			if yr == 1 and q == 1:
-				rlist = [np.nan,4,4,3,3,3,2,2,1,np.nan]
+				rlist = []
+				rmlist = []
+				rl = []
+				p = [np.nan,3,3,2,2,2,2,1,1,1]
+				for i in range(20):
+					for j in range(8):
+						ps = ra.choice(p)
+						rl.append(ps)
+					rlist.append(rl)
+					rl = []
 				act1=10;act2=50
+				pr = [4,3,3,3,3,2,2,1]
+				for i in range(10):
+					for j in range(8):
+						rp = ra.choice(pr)
+						rml.append(rp)
+					rmlist.append(rml)
+					rml = []
 			if yr == 1 and q == 2:
-				rlist = [np.nan,4,4,4,3,3,2,2,1,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,4,4,3,3,2,2,2,2,1,1]
+				for i in range(20):
+					for j in range(8):
+						ps = ra.choice(p)
+						rl.append(ps)
+					rlist.append(rl)
+					rl = []
 				act1=15;act2=60
+				pr = [4,4,3,3,3,2,2,1]
+				for i in range(10):
+					for j in range(8):
+						rp = ra.choice(pr)
+						rml.append(rp)
+					rmlist.append(rml)
+					rml = []
 			if yr == 1 and q == 3:
-				rlist = [np.nan,5,4,4,3,3,2,2,1,np.nan]
+				rlist = []
+				rmlist = []
+				rl = []
+				p = [np.nan,4,4,3,3,3,3,2,2,1,1]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [4,4,3,3,3,3,2,2]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=20;act2=70
 			if yr == 1 and q == 4:
-				rlist = [np.nan,5,4,4,3,3,3,2,1,np.nan]
-				act1=25;act2=70
-			if yr == 2 and q == 1:
-				rlist = [np.nan,5,4,4,4,3,3,2,1,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,4,4,4,3,3,3,2,2,1,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [4,4,4,3,3,3,2,2]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=30;act2=80
 			if yr == 2 and q == 2:
-				rlist = [np.nan,5,4,4,4,3,3,2,1,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,4,4,4,3,3,3,3,2,2,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,4,4,3,3,3,2,2]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=35;act2=80
 			if yr == 2 and q == 2:
-				rlist = [np.nan,5,4,4,4,3,3,2,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,4,4,4,3,3,3,3,2,2,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,4,4,3,3,3,2,2]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=40;act2=85
 			if yr == 2 and q == 3:
-				rlist = [np.nan,5,4,4,4,3,3,2,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,4,4,4,3,3,3,2,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,4,4,3,3,2]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=45;act2=90
 			if yr == 2 and q == 4:
-				rlist = [np.nan,5,5,4,4,3,3,2,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,5,4,4,4,3,3,3,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,4,4,3,3,2]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=50;act2=100
 			if yr == 3 and q == 1:
-				rlist = [np.nan,5,5,4,4,4,3,3,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,5,5,4,4,4,3,3,3,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,4,4,3,3]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=50;act2=100
 			if yr == 3 and q == 2:
-				rlist = [np.nan,5,5,5,4,4,3,3,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,5,5,4,4,4,4,3,3,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,4,4,4,3]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=65;act2=115
 			if yr == 3 and q == 3:
-				rlist = [np.nan,5,5,5,4,4,4,3,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,5,5,5,4,4,4,4,3,3,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,5,4,4,4,3]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=75;act2=125
 			if yr == 3 and q == 4:
-				rlist = [np.nan,5,5,5,4,4,3,3,2,np.nan]
+				rlist = []
+				rmlist = []
+				p = [np.nan,5,5,5,5,5,4,4,4,4,3,3,2]
+				for i in range(20):
+					for j in range(8):
+						rp = ra.choice(p)
+						rl.append(rp)
+					rlist.append(rl)
+					rl = []
+				pr = [5,5,5,4,4,4,3,5]
+				for i in range(10):
+					for j in range(8):
+						ps = ra.choice(pr)
+						rml.append(ps)
+					rmlist.append(rml)
+					rml = []
 				act1=75;act2=135
 			part_regis(n, q, yr)
-			mgt_ratings(n, q, yr, rlist)
+			mgt_ratings(n, q, yr, rmlist)
 			part_web_act(n, q, yr, act1, act2)
 			part_satisfaction(n, r, yr, q, rlist)
 			part_web_sat(n, r, yr, q, rlist)
