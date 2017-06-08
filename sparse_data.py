@@ -247,8 +247,6 @@ if __name__ == '__main__':
 	partner_data_info = pd.DataFrame()
 	partner_data_scores = pd.DataFrame()
 	pinfo.reset_index(drop=True, inplace=True)
-	mrp.drop(['ID'], axis=1)
-	pwa.drop(['ID'], axis=1)
 	mrp.reset_index(drop=True, inplace=True)
 	pwa.reset_index(drop=True, inplace=True)
 	partner_data_info = pd.concat([pinfo, mrp, pwa], axis=1)

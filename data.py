@@ -60,8 +60,6 @@ def part_regis(n, q, yr):
 	ds['Cust_Size'] = Cust_Size
 	ds['Credit'] = Credit
 	ds['Territory'] = Terr
-	ds['Yr'] = yr
-	ds['Qtr'] = q
 	filestr = 'o_partner_reg_data_' + str(yr) + '_' + str(q) +'.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
@@ -82,6 +80,7 @@ def mgt_ratings(n, q, yr, rmlist):
 			resp = ra.choice(rml)
 			Resp.append(resp)
 		ds[cols[i]] = Resp
+	ds.drop(['ID'], axis=1, inplace=True)
 	filestr = 'o_mgt_ratings_' + str(yr) + '_' + str(q) + '.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
@@ -98,6 +97,7 @@ def part_web_act(n, q, yr, act1, act2):
 			resp = ra.randint(act1,act2)
 			Resp.append(resp)
 		ds[col] = Resp
+	ds.drop(['ID'], axis=1, inplace=True)
 	filestr = 'o_web_activity_' + str(yr) + '_' + str(q) + '.pkl'
 	f = open(filestr, 'wb')
 	pkl.dump(ds,f,-1)
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 				rlist = []
 				rmlist = []
 				rl = []
-				p = [np.nan,3,3,2,2,2,2,1,1,1]
+				p = [np.nan,3,3,2,2,0,0,1,1,1]
 				for i in range(20):
 					for j in range(8):
 						ps = ra.choice(p)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 					rlist.append(rl)
 					rl = []
 				act1=10;act2=50
-				pr = [4,3,3,3,3,2,2,1]
+				pr = [4,3,3,3,2,2,1,0]
 				for i in range(10):
 					for j in range(8):
 						rp = ra.choice(pr)
@@ -227,7 +227,7 @@ if __name__ == '__main__':
 			if yr == 1 and q == 2:
 				rlist = []
 				rmlist = []
-				p = [np.nan,4,4,3,3,2,2,2,2,1,1]
+				p = [np.nan,4,4,3,3,2,2,2,2,1,1,0]
 				for i in range(20):
 					for j in range(8):
 						ps = ra.choice(p)
@@ -235,7 +235,7 @@ if __name__ == '__main__':
 					rlist.append(rl)
 					rl = []
 				act1=15;act2=60
-				pr = [4,4,3,3,3,2,2,1]
+				pr = [4,4,3,3,3,2,2,1,0]
 				for i in range(10):
 					for j in range(8):
 						rp = ra.choice(pr)
@@ -246,14 +246,14 @@ if __name__ == '__main__':
 				rlist = []
 				rmlist = []
 				rl = []
-				p = [np.nan,4,4,3,3,3,3,2,2,1,1]
+				p = [np.nan,4,4,3,3,3,3,2,2,1,1,0]
 				for i in range(20):
 					for j in range(8):
 						rp = ra.choice(p)
 						rl.append(rp)
 					rlist.append(rl)
 					rl = []
-				pr = [4,4,3,3,3,3,2,2]
+				pr = [4,4,3,3,3,3,2,2,0,1,1]
 				for i in range(10):
 					for j in range(8):
 						ps = ra.choice(pr)
@@ -264,7 +264,7 @@ if __name__ == '__main__':
 			if yr == 1 and q == 4:
 				rlist = []
 				rmlist = []
-				p = [np.nan,4,4,4,3,3,3,2,2,1,2]
+				p = [np.nan,4,4,4,3,3,3,2,2,1,2,0]
 				for i in range(20):
 					for j in range(8):
 						rp = ra.choice(p)
