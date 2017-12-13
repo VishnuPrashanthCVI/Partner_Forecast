@@ -1,431 +1,136 @@
 import pandas as pd
 import numpy as np
 import random as ra
-from sklearn.utils import resample
 import pickle as pkl
 
+ra.seed(73)
 
-#create partner index
-def part_regis(n, q, yr):
-	ds = pd.DataFrame()
-	ds['ID'] = range(1,n + 1)
-	#create partner certification
-	clist=['Platinum','Gold','Silver','Premier', 'Registered']
-	Cert = []
-	for i in range(n):
-		cert = ra.choice(clist)
-		Cert.append(cert)
+#creating a data file with all id and multiple respondents per id
+#create partner index including all respondents
+def create_respondents(YR=[1,2,3,4],Q=[1,2,3,4],n=300):
+	partner_id=list(range(1,n+1))
+	no = [3,2,3,2,1.1]
+	ID = []
+	Yr = []
+	Qtr = []
+	for id in partner_id:
+		for yr in YR:
+			for qtr in Q:
+				resp = ra.choice(no)
+				for l in range(int(resp)):
+					ID.append(id)
+					Qtr.append(qtr)
+					Yr.append(yr)
+	return partner_id,ID,Yr,Qtr
 
-	#create partner primary channel
+#create a dictionary of partner_id and registration for all respondents
+def create_identity_dict(partner_id):
+	iden_dict={}
+	clist=['Platinum','Gold','Silver','Premier', 'Registered','Gold','Silver','Premier', 'Registered','Registered']
 	dlist=['VAR', 'DVAR', 'DIST']
-	RTM = []
-	for i in range(n):
-		rtm = ra.choice(dlist)
-		RTM.append(rtm)
+	plist=['ENT', 'ENT', 'CAR', 'CAR', 'ENT', 'GOVT', 'ENT', 'EDUC']
+	cslist=['10','100','250','1000','10000','25000','100','250','1000','10000']
+	tlist=['NE', 'SE', 'SW', 'NW', 'C', 'W', 'NE']
+	crlist = [5,5,5,4,4,4,3,3,2,1]
 
-	#create primary customer target
-	pclist=['ENT', 'ENT', 'CAR', 'CAR', 'ENT', 'GOVT', 'ENT', 'EDUC']
-	Cust = []
-	for i in range(n):
-		cust = ra.choice(pclist)
-		Cust.append(cust)
+	for id in partner_id:
+		c = ra.choice(clist)
+		d = ra.choice(dlist)
+		p = ra.choice(plist)
+		ca = ra.choice(cslist)
+		t = ra.choice(tlist)
+		cr =  ra.choice(crlist)
+		iden_dict[id]=[c,d,p,ca,t,cr]
 
-	#create credit rating
-	credit = range(4,11)
-	Credit = []
-	for i in range(n):
-		cr = ra.choice(credit)
-		Credit.append(cr)
+	return iden_dict
 
-	#create customer target size
-	cslist=['10','100','250','1000','10000','25000']
-	Cust_Size = []
-	for i in range(n):
-		cust = ra.choice(cslist)
-		Cust_Size.append(cust)
-
-	#create territory
-	tlist=['NE', 'SE', 'SW', 'NW', 'C']
-	Terr = []
-	for i in range(n):
-		terr = ra.choice(tlist)
-		Terr.append(terr)
-
-	#create basic data file
-	ds['Yr'] = yr
-	ds['Qtr'] = q
-	ds['Cert'] = Cert
-	ds['RTM'] = RTM
-	ds['Cust'] = Cust
-	ds['Cust_Size'] = Cust_Size
-	ds['Credit'] = Credit
-	ds['Territory'] = Terr
-	filestr = 'o_partner_reg_data_' + str(yr) + '_' + str(q) +'.pkl'
-	f = open(filestr, 'wb')
-	pkl.dump(ds,f,-1)
-	f.close()
-	ds = pd.DataFrame()
-
-#create company rankings of partner
-
-def mgt_ratings(n, q, yr, rmlist):
-	ds = pd.DataFrame()
-	ds['ID'] = range(1,n+1)
-	cols = ['Sales','Engr','Training','Support','Operations','Expert']
-	for i in range(len(cols)):
-		rml = []
-		rml = rmlist[i]
-		Resp = []
-		for j in range(ds.shape[0]):
-			resp = ra.choice(rml)
-			Resp.append(resp)
-		ds[cols[i]] = Resp
-	ds.drop(['ID'], axis=1, inplace=True)
-	filestr = 'o_mgt_ratings_' + str(yr) + '_' + str(q) + '.pkl'
-	f = open(filestr, 'wb')
-	pkl.dump(ds,f,-1)
-	f.close()
+#create partner respondents registration data pd file
+def create_response_df(ID,Yr,Qtr,iden_dict):
+	df=pd.DataFrame()
+	class_list = []
+	type_list = []
+	customer_type = []
+	customer_size = []
+	territory = []
+	credit = []
+	respondent =[]
 
 
-def part_web_act(n, q, yr, act1, act2):
-	ds = pd.DataFrame()
-	ds['ID'] = range(1,n+1)
-	cols = ['Bids','Quotes','Registrations','Inquiries','Sessions']
-	for col in cols:
-		Resp = []
-		for i in range(ds.shape[0]):
-			resp = ra.randint(act1,act2)
-			Resp.append(resp)
-		ds[col] = Resp
-	ds.drop(['ID'], axis=1, inplace=True)
-	filestr = 'o_web_activity_' + str(yr) + '_' + str(q) + '.pkl'
-	f = open(filestr, 'wb')
-	pkl.dump(ds,f,-1)
-	f.close()
-	ds = pd.DataFrame()
+	resplist=['Mgt','Sales','Engr','Opn', 'Support', 'Mgt','Mgt','Mgt']
+	for id in ID:
+		class_list.append(iden_dict[id][0])
+		type_list.append(iden_dict[id][1])
+		customer_type.append(iden_dict[id][2])
+		customer_size.append(iden_dict[id][3])
+		territory.append(iden_dict[id][4])
+		credit.append(iden_dict[id][5])
+		respondent.append(ra.choice(resplist))
+	df['Response_Number']=range(len(ID))
+	df['ID']=ID
+	df['Yr']=Yr
+	df['Qtr']=Qtr
+	df['Class']=class_list
+	df['Partner_Type']=type_list
+	df['Customer_Type'] = customer_type
+	df['Customer_Size'] = customer_size
+	df['Territory'] = territory
+	df['Credit_Rating'] = credit
+	df['Respondent'] = respondent
+	df.sort_values(by = ['Response_Number'], ascending=True, inplace=True)
+	return df
 
 
-#create multiple respondents of exec, sales, operations, staff
-#note resample is a numpy utility that works for pandas also
-def part_satisfaction(n, r, yr, q, rlist):
-	ds=pd.DataFrame()
-	ds['ID'] = range(1,n+1)
-	dss = resample(ds,n_samples=r,random_state=71)
-	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
-	slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
-	Resp = []
-	for i in range(ds.shape[0]):
-		resp = ra.choice(slist)
-		Resp.append(resp)
-	ds['Resp'] = Resp
-	ds.sort_values(by = 'ID', ascending=True, inplace=True)
+def make_scores_dict(df):
+	time_list=[]
+	for i in range(1,5):
+		for j in range(1,5):
+			time_list.append((i,j))
 
-#create general satisfaction questions
-	questions = ['Satisfaction', 'Value_Potential', 'Expected_Relationship_Duration', 'Profit_Potential', 'Product_Quality', 'Product_Importance', 'Product_Breadth', 'Product_Competitiveness', 'Product_Training', 'Customer_Referral', 'Profit_Expectation', 'Effective_Communications', 'Price_Point', 'Margin', 'Brand_Requirement', 'Training_Effectiveness', 'Customer_Recognition', 'Problem_Solving']
+	score = []
+	score.append([3,2,2,2,1,np.nan,np.nan,1,1,2,2,2,3])
+	score.append([3,3,2,2,1,np.nan,np.nan,1,1,2,2,3,3])
+	score.append([3,3,3,2,1,np.nan,np.nan,1,1,2,2,3,4])
+	score.append([3,3,3,2,2,np.nan,np.nan,1,2,2,2,3,4])
+	score.append([4,3,3,2,2,np.nan,np.nan,2,2,2,3,3,4])
+	score.append([4,3,3,2,2,np.nan,np.nan,2,2,2,2,3,4])
+	score.append([4,3,3,3,2,np.nan,np.nan,2,2,2,3,3,4])
+	score.append([4,4,3,3,2,np.nan,np.nan,2,2,3,3,3,4])
+	score.append([4,4,3,3,2,np.nan,np.nan,2,2,3,3,4,4])
+	score.append([4,4,3,3,3,np.nan,np.nan,2,2,3,3,4,4])
+	score.append([4,4,4,3,3,np.nan,np.nan,2,2,3,4,4,4])
+	score.append([5,4,4,3,3,np.nan,np.nan,3,3,3,4,4,4])
+	score.append([5,4,4,3,3,np.nan,np.nan,3,3,4,4,4,5])
+	score.append([5,5,4,3,3,np.nan,np.nan,3,3,4,4,4,5])
+	score.append([5,5,4,4,3,np.nan,np.nan,3,3,4,4,5,5])
+	score.append([5,5,4,4,4,np.nan,np.nan,3,4,4,5,5,5])
+	scores = dict(zip(time_list,score))
+	return scores
 
-	for i  in range(len(questions)):
-		Resp = []
-		rsl = []
-		rsl = rlist[i]
-		for j in range(ds.shape[0]):
-			resp = ra.choice(rsl)
-			Resp.append(resp)
-		ds[questions[i]] = Resp
-	filestr = 'o_partner_sat_data' + str(yr) + '_' + str(q) + '.pkl'
-	f = open(filestr, 'wb')
-	pkl.dump(ds,f,-1)
-	f.close()
+def make_entry(df,scores):
+	satisfaction = ['Overall_Satisfaction', 'Value_Potential', 'Expected_Relationship_Duration', 'Profit_Potential', 'Product_Quality', 'Product_Importance', 'Product_Breadth', 'Product_Competitiveness', 'Product_Training', 'Customer_Referral', 'Profit_Expectation', 'Effective_Communications', 'Price_Point', 'Margin', 'Brand_Requirement', 'Training_Effectiveness', 'Customer_Recognition', 'Problem_Solving']
+	mgt = ['Sales','Engr','Training','Support','Operations','Expert']
+	activity = ['Bids','Quotes','Registrations','Inquiries','Sessions']
+	acct_team = ['Acct_Mgr', 'Support_Mgr', 'Team_Ability', 'Team_Contribution', 'Operations_Ability', 'Acct_Team_Satisfaction', 'Team_Solutions', 'Overall_Satisfaction']
+	sat_web = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
+	features = satisfaction+mgt+activity+acct_team+sat_web
 
+	idt=[]
+	idt = zip(list(df.Yr),list(df.Qtr))
+	for col in features:
+		T=[]
+		for i in range(len(idt)):
+			T.append(ra.choice(scores[idt[i]]))
+		df[col]=T
+	df = df.sort_values(by = ['Response_Number'], ascending=True, inplace=False).reset_index(drop=True)
+	return df
 
-#create account team ratings
-def part_team_sat(n, r, yr, q, rlist):
-	ds=pd.DataFrame()
-	ds['ID'] = range(1,n+1)
-	dss = resample(ds,n_samples=r,random_state=71)
-	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
-	slist=['Exec', 'Exec', 'Sales','Sales','Sales','Opns','Staff']
-	Resp = []
-	for i in range(n+r):
-		resp = ra.choice(slist)
-		Resp.append(resp)
-	ds['Resp'] = Resp
-	ds.sort_values(by = 'ID', ascending=True, inplace=True)
-	Resp = []
+if __name__== '__main__':
 
-	questions = ['Acct_Mgr', 'Support_Mgr', 'Team_Ability', 'Team_Contribution', 'Operations_Ability', 'Acct_Team_Satisfaction', 'Team_Solutions', 'Overall_Satisfaction']
-	for i  in range(len(questions)):
-		Resp = []
-		rsl = []
-		rsl = rlist[i]
-		for j in range(ds.shape[0]):
-			resp = ra.choice(rsl)
-			Resp.append(resp)
-		ds[questions[i]] = Resp
-	filestr = 'o_part_team_rating'+str(yr)+'_'+str(q)+'.pkl'
-	f = open(filestr, 'wb')
-	pkl.dump(ds,f,-1)
-	f.close()
-
-
-def part_web_sat(n, r, yr, q, rlist):
-	ds=pd.DataFrame()
-	ds['ID'] = range(1,n+1)
-	dss = resample(ds,n_samples=r,random_state=71)
-	ds = pd.concat([ds,dss], axis = 0, ignore_index = True)
-	slist=['Engr', 'Sales', 'Sales','Opns','Staff']
-	Resp = []
-	for i in range(n+r):
-		resp = ra.choice(slist)
-		Resp.append(resp)
-	ds['Resp'] = Resp
-	ds.sort_values(by = 'ID', ascending=True, inplace=True)
-	questions = ['Usefulness', 'Effectiveness', 'Response', 'Error_Free', 'Ease_of_Use', 'Pricing', 'Delivery_Response', 'Overall_Satisfaction']
-	for i  in range(len(questions)):
-		Resp = []
-		rsl = []
-		rsl = rlist[i]
-		for j in range(ds.shape[0]):
-			resp = ra.choice(rsl)
-			Resp.append(resp)
-		ds[questions[i]] = Resp
-	filestr = 'o_part_web_rating'+str(yr)+'_'+str(q)+'.pkl'
-	f = open(filestr, 'wb')
-	pkl.dump(ds,f,-1)
-	f.close()
-
-if __name__ == '__main__':
-
-	n = 300
-	r = 100
-	qtrs = [1,2,3,4]
-	yrs= [1,2,3]
-	rlist = []
-	rmlist = []
-	rl = []
-	rml = []
-	for yr in yrs:
-		for q in qtrs:
-			if yr == 1 and q == 1:
-				rlist = []
-				rmlist = []
-				rl = []
-				p = [np.nan,3,3,2,2,0,0,1,1,1]
-				for i in range(20):
-					for j in range(8):
-						ps = ra.choice(p)
-						rl.append(ps)
-					rlist.append(rl)
-					rl = []
-				act1=10;act2=50
-				pr = [4,3,3,3,2,2,1,0]
-				for i in range(10):
-					for j in range(8):
-						rp = ra.choice(pr)
-						rml.append(rp)
-					rmlist.append(rml)
-					rml = []
-			if yr == 1 and q == 2:
-				rlist = []
-				rmlist = []
-				p = [np.nan,4,4,3,3,2,2,2,2,1,1,0]
-				for i in range(20):
-					for j in range(8):
-						ps = ra.choice(p)
-						rl.append(ps)
-					rlist.append(rl)
-					rl = []
-				act1=15;act2=60
-				pr = [4,4,3,3,3,2,2,1,0]
-				for i in range(10):
-					for j in range(8):
-						rp = ra.choice(pr)
-						rml.append(rp)
-					rmlist.append(rml)
-					rml = []
-			if yr == 1 and q == 3:
-				rlist = []
-				rmlist = []
-				rl = []
-				p = [np.nan,4,4,3,3,3,3,2,2,1,1,0]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [4,4,3,3,3,3,2,2,0,1,1]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=20;act2=70
-			if yr == 1 and q == 4:
-				rlist = []
-				rmlist = []
-				p = [np.nan,4,4,4,3,3,3,2,2,1,2,0]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [4,4,4,3,3,3,2,2]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=30;act2=80
-			if yr == 2 and q == 2:
-				rlist = []
-				rmlist = []
-				p = [np.nan,4,4,4,3,3,3,3,2,2,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,4,4,3,3,3,2,2]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=35;act2=80
-			if yr == 2 and q == 2:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,4,4,4,3,3,3,3,2,2,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,4,4,3,3,3,2,2]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=40;act2=85
-			if yr == 2 and q == 3:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,4,4,4,3,3,3,2,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,4,4,3,3,2]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=45;act2=90
-			if yr == 2 and q == 4:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,5,4,4,4,3,3,3,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,4,4,3,3,2]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=50;act2=100
-			if yr == 3 and q == 1:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,5,5,4,4,4,3,3,3,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,4,4,3,3]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=50;act2=100
-			if yr == 3 and q == 2:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,5,5,4,4,4,4,3,3,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,4,4,4,3]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=65;act2=115
-			if yr == 3 and q == 3:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,5,5,5,4,4,4,4,3,3,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,5,4,4,4,3]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=75;act2=125
-			if yr == 3 and q == 4:
-				rlist = []
-				rmlist = []
-				p = [np.nan,5,5,5,5,5,4,4,4,4,3,3,2]
-				for i in range(20):
-					for j in range(8):
-						rp = ra.choice(p)
-						rl.append(rp)
-					rlist.append(rl)
-					rl = []
-				pr = [5,5,5,4,4,4,3,5]
-				for i in range(10):
-					for j in range(8):
-						ps = ra.choice(pr)
-						rml.append(ps)
-					rmlist.append(rml)
-					rml = []
-				act1=75;act2=135
-			part_regis(n, q, yr)
-			mgt_ratings(n, q, yr, rmlist)
-			part_web_act(n, q, yr, act1, act2)
-			part_satisfaction(n, r, yr, q, rlist)
-			part_web_sat(n, r, yr, q, rlist)
-			part_team_sat(n, r, yr, q, rlist)
+	partner_id,ID,Yr,Qtr=create_respondents(YR=[1,2,3,4],Q=[1,2,3,4],n=300)
+	iden_dict=create_identity_dict(partner_id)
+	df=create_response_df(ID,Yr,Qtr,iden_dict)
+	scores=make_scores_dict(df)
+	df = make_entry(df,scores)
+	filestr = 'raw_partner_data.pkl'
+	with open(filestr,'wb') as f:
+		pkl.dump(df,f,-1)
