@@ -7,11 +7,13 @@ from sklearn.preprocessing import MinMaxScaler
 import pickle as pkl
 import math as ma
 import random as ra
-
 def load_data():
 	with open('partner_data.pkl', 'rb') as f:
 		data = pkl.load(f)
-		return data
+	data = data.sort_values(by = ['ID','Yr','Qtr'],axis=0)
+	data = data.reset_index(drop=True)
+	return data
+
 
 def dates(startm, startq, end):
 	strt_qdt = datetime.strptime(startq, '%Y,%m')
@@ -23,25 +25,40 @@ def dates(startm, startq, end):
 
 def qtr_rev(data):
 	dr = pd.DataFrame()
+	dr['ID'] = data.ID
+	dr['Yr'] = data.Yr
+	dr['Qtr'] = data.Qtr
 #set revenue class by certification level
 	clist =['Registered', 'Premier', 'Silver', 'Gold', 'Platinum']
+	minlist =[1,2,3,4,5,6]
 	multiplier = []
-	for cl in data.Class:
-		idx = clist.index(cl)
-		multiplier.append(((idx)*.2)+1)
-	dr['Class'] = multiplier
-#set revenue multiplier by territory
-	multiplier = []
-	tlist=['C', 'NE', 'SE', 'SW', 'W', 'NW']
-	for t in data.Territory:
-		idx = tlist.index(t)
-		multiplier.append(((idx+.5)*.1)+1)
-	dr['Territory'] = multiplier
+	for i in range(len(data.ID)):
+		if i == 0:
+			idx = clist.index(data.Class[i])
+			m = range(minlist[idx],minlist[idx+1])
+			m = ra.choice(m)
+			multiplier.append(m)
+
+		elif (i>0) and i<len(data.ID):
+			if data.Class[i-1] == data.Class[i]:
+				m = multiplier[i-1]
+				multiplier.append(m)
+			else:
+				idx = clist.index(data.Class[i])
+				m = range(minlist[idx],minlist[idx+1])
+				m = ra.choice(m)
+				multiplier.append(m)
+		else:
+			m = multiplier[i-1]
+			multiplier.apppend(m)
+
+	dr['Start'] = multiplier
+
 #set seasonal variation by quarter with random variation
 	multiplier = []
 	qlist = [1,2,3,4]
-	qwt = [.90,1.10,.90,1.20]
-	qr =[.005,.015,.02,-.005,-.015,-.02]
+	qwt = [.95,1.05,.90,1.10]
+	qr =[.015,.010,.005,-.005,-.010,-.015]
 	for qtr in data.Qtr:
 		idx=qlist.index(qtr)
 		s = qwt[idx]+ra.choice(qr)
@@ -49,21 +66,8 @@ def qtr_rev(data):
 	dr['Season'] = multiplier
 	#set mean for revenue forecast
 	dr['Mean'] = data.iloc[:,9:].mean(axis=1)
-	dr['Min'] = np.random.randint(3)+np.random.randn()
-	dr['QtrRev']=dr.Season*dr.Mean*dr.Min
+	dr['QtrRev']=dr.Mean*dr.Start*dr.Season
 	return dr
-
-#def mon_dates(md):
-#	ID = []; Yr = []; Mon = []
-#	yr = range(1,5)
-#	mon = range(1,13)
-#	for i in range(1,301):
-#		for y in yr:
-#	dm = pd.DataFrame(np.array([ID,Yr,Mon]).T, columns = ['ID','Yr','Mon'])
-#	dm = dm.sort_values(by=['ID', 'Yr', 'Mon'], axis = 0).reset_index(drop=True)
-#	dm['Date'] = md
-#	return dm
-
 
 if __name__== '__main__':
 	#load data, scale, and create satisfaction scores with revenue
@@ -75,26 +79,24 @@ if __name__== '__main__':
 	startq = '2011,3'
 	end = '2014,12'
 	daq, dam = dates(startm,startq,end)
-	#create vector of 300 quarterly and monthly dates
+	#create vector of quarterly and monthly dates
 	Qtr = []
 	Mon = []
 	Mon_ID = []
-	for i in range(1,301):
-		Mon_ID.extend([i]*48)
+	for i in range(data.ID.min(),data.ID.max()+1):
+		Mon_ID.extend([i]*len(dam))
 		Qtr.extend(daq)
 		Mon.extend(dam)
 	#monthly time series data grouped by ID, Yr, Qtr, Mon
-	data_by_ID = data.sort_values(by=['ID','Yr','Qtr'], axis=0)
-	Partner_Qtr_Rev = pd.DataFrame()
-	Partner_Qtr_Rev['ID'] = data_by_ID.ID
-	Partner_Qtr_Rev['Revenue'] = data_by_ID.Rev
-	Partner_Qtr_Rev['Date'] = Qtr
-	#create monthly revenue data
-	third = [.4,.5,.55]
-	second = [.25,.28,.30]
+	data['Date'] = Qtr
+	data = data.sort_values(by=['ID','Date'], axis=0)
+	data = data.reset_index(drop=True)
+	#create monthly revenue data time series
+	third = [.4,.43]
+	second = [.3,.33]
 	noise = [.001,.0015,.0020,-.001,-.0015,-.002]
 	Rev = []
-	for r in data_by_ID.Rev:
+	for r in data.Rev:
 		x = (ra.choice(third)+ra.choice(noise))*r
 		y = (ra.choice(second)+ra.choice(noise))*r
 		z = r - x - y
@@ -106,15 +108,10 @@ if __name__== '__main__':
 	Partner_Mon_Rev['Revenue'] = Rev
 	Partner_Mon_Rev['Date'] = Mon
 
-
-	#filestr = 'Partner_Data_Revenue.pkl'
-	#with open(filestr, 'wb') as f:
-	#	pkl.dump(Partner_Qtr_Rev, f, -1)
-
 	filestr = 'Partner_Monthly_Revenue.pkl'
 	with open(filestr, 'wb') as f:
 		pkl.dump(Partner_Mon_Rev, f, -1)
 
-	filestr = 'Partner_Quarterly_Revenue.pkl'
+	filestr = 'Part_Qtr_Rev_Data.pkl'
 	with open(filestr, 'wb') as f:
-		pkl.dump(Partner_Qtr_Rev, f, -1)
+		pkl.dump(data, f, -1)

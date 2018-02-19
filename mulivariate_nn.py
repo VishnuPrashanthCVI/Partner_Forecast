@@ -1,6 +1,6 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import sgd,rmsprop
+from keras.layers import Dense, Dropout, BatchNormalization
+from keras.optimizers import sgd,rmsprop,adam
 from keras.initializers import RandomNormal, RandomUniform
 from keras.losses import mean_squared_error, mean_absolute_error
 import keras

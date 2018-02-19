@@ -3,17 +3,30 @@ import pandas as pd
 import numpy as np
 import pickle as pkl
 from sklearn.preprocessing import StandardScaler, LabelEncoder, MinMaxScaler
+from sklearn.model_selection import train_test_split
 
-class PrepData():
+class PrepDataNN():
 	def __init__(self):
 		pass
-	def prep_data(self,dpr,dpd):
-		#sort quarterly revenue by data and id
+	def prep_data_index(self, seed):
+		with open('Partner_Quarterly_Revenue.pkl', 'rb') as f:
+			dpr = pkl.load(f)
+		#load partner data as df
+		with open('partner_data.pkl', 'rb') as f:
+			dpd = pkl.load(f)
+		#sort quarterly revenue by date and id
 		dpr = dpr.sort_values(by=['Date','ID'])
-		#create revenue data to be predicted
-		y_test = dpr.Revenue[dpr.Date == '2014-12-01'].reset_index(drop=True)
-		#create revenue data for training dataset
-		y_train = dpr.Revenue[dpr.Date<'2014-12-01'].reset_index(drop=True)
+		#shift revenue by one quarter for seasonal index
+		push = dpr[dpr.Date<'2011-06-01'].shape[0]
+		dpr['PQR'] = dpr.Revenue.shift(push)
+		dpr['Seas_Ind']=dpr.Revenue/dpr.PQR
+		#truncate revenue data for data set
+		dpi = dpr[dpr.Date>'2011-03-01']
+		dpi = dpi[dpi.Date < '2014-12-01']
+		#create revenue data
+		ydata = dpi.Seas_Ind
+		y_pred = dpr.Seas_Ind[dpr.Date == '2014-12-01']
+		#create independent data
 		#add TI as index for slicing
 		s1 = [str(yr) for yr in dpd.Yr]
 		s2 = [str(qtr) for qtr in dpd.Qtr]
@@ -21,34 +34,24 @@ class PrepData():
 		for i in range(len(s1)):
 		    s3.append(s1[i]+s2[i])
 		dpd['TI'] = s3
-		
-
-
-
 		#columns to drop from multivariate projections
 		cols = list(dpd.columns[:9])
 		cols.append(dpd.columns[-1])
 		#quarterly data to predict revenue
-		x_test = dpd[dpd.TI=='44'].drop(cols,axis=1,inplace=False).reset_index(drop=True)
-		#quarterly data to run analysis
-		x_train = dpd[dpd.TI<'44'].drop( cols,axis=1, inplace=False).reset_index(drop=True)
-		#make names explicit and convert serues to array with reshape
-		y_train_values = y_train.values.reshape(-1,1)
-		x_train_values = x_train.values
-		y_test_values = y_test.values.reshape(-1,1)
-		x_test_values = x_test.values
+		x_pred = dpd[dpd.TI=='44'].drop(cols,axis=1,inplace=False).reset_index(drop=True)
+				#quarterly data to run analysis
+		xdata = dpd[dpd.TI<'44'].reset_index(drop=True)
+		xdata = xdata[xdata.TI>'11'].reset_index(drop=True).drop( cols,axis=1, inplace=False)
+		#make train test split
+		y_train = y_train.values
+		x_train = x_train.values
+		y_test = y_test.values
+		x_test = x_test.values
 		#scale all factors for relu activation
-		scaler=MinMaxScaler()
-		x_train_scaled = scaler.fit_transform(x_train_values)
-		x_test_scaled = scaler.fit_transform(x_test_values)
-		y_test_scaled = scaler.fit_transform(y_test_values)
-		y_train_scaled = scaler.fit_transform(y_train_values)
+		scaler=StandardScaler()
+		x_train = scaler.fit_transform(x_train)
+		x_test = scaler.fit_transform(x_test)
+		#y_train = scaler.fit_transform(y_train)
+		#y_test = scaler.fit_transform(y_test)
 
-		return x_train_scaled, y_train_scaled, x_test_scaled, y_test_scaled
-
-	def inv_trans(self,y,dpr):
-		y_range = dpr.Revenue[dpr.Date>'2014-09-01'].reset_index(drop=True).values.reshape(-1,1)
-		max = y_range.max()
-		min = y_range.min()
-		y = scaler.inverse_transform(y)
-		return y
+		return x_train, y_train, x_test, y_test
