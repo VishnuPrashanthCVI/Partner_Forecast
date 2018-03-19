@@ -111,7 +111,7 @@ if __name__ == '__main__':
 	df = merge_data(data_predict, y_pred, data_train, data_reg)
 
 	#pickle new filled data for additional analysis
-	with open ('partner_data.pkl','wb') as f:
+	with open ('NoNan_Partner_Data.pkl','wb') as f:
 		pkl.dump(df, f,-1)
 
 	colmse, _ = impute_nan(data,axis=0)

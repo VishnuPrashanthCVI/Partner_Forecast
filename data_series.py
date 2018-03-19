@@ -7,13 +7,21 @@ from sklearn.preprocessing import MinMaxScaler
 import pickle as pkl
 import math as ma
 import random as ra
+
 def load_data():
-	with open('partner_data.pkl', 'rb') as f:
+	with open('true_partner_data.pkl', 'rb') as f:
 		data = pkl.load(f)
+	data_desc = data.loc[:,data.columns[:11]]
+	data_desc.drop(['Response_Number', 'Respondent', 'Credit_Rating'], axis =1, inplace = True)
+	data_desc = data_desc.drop_duplicates(['Yr','Qtr','ID']).reset_index(drop=True)
+	data_rate = data.groupby(['Yr', 'Qtr', 'ID']).mean()
+	data_rate = data_rate.drop(['Response_Number'],axis=1)
+	data_rate.reset_index(inplace=True)
+	#merge registration data with prepared data
+	data = pd.merge(data_desc, data_rate, on = ['Yr','Qtr','ID'])
 	data = data.sort_values(by = ['ID','Yr','Qtr'],axis=0)
 	data = data.reset_index(drop=True)
 	return data
-
 
 def dates(startm, startq, end):
 	strt_qdt = datetime.strptime(startq, '%Y,%m')
@@ -82,9 +90,15 @@ if __name__== '__main__':
 	#create vector of quarterly and monthly dates
 	Qtr = []
 	Mon = []
-	Mon_ID = []
+	MID = []
+	MT = []
+	MC = []
 	for i in range(data.ID.min(),data.ID.max()+1):
-		Mon_ID.extend([i]*len(dam))
+		MID.extend([i]*len(dam))
+		mt = [data[data['ID'] == i].iloc[0,7] for j in range(len(dam))]
+		mc = [data[data['ID'] == i].iloc[0,3] for j in range(len(dam))]
+		MT.extend(mt)
+		MC.extend(mc)
 		Qtr.extend(daq)
 		Mon.extend(dam)
 	#monthly time series data grouped by ID, Yr, Qtr, Mon
@@ -104,9 +118,12 @@ if __name__== '__main__':
 		Rev.append(y)
 		Rev.append(x)
 	Partner_Mon_Rev = pd.DataFrame()
-	Partner_Mon_Rev['ID'] = Mon_ID
+	Partner_Mon_Rev['ID'] = MID
 	Partner_Mon_Rev['Revenue'] = Rev
 	Partner_Mon_Rev['Date'] = Mon
+	Partner_Mon_Rev['Territory'] = MT
+	Partner_Mon_Rev['Class'] = MC
+
 
 	filestr = 'Partner_Monthly_Revenue.pkl'
 	with open(filestr, 'wb') as f:
